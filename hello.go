@@ -1,22 +1,13 @@
 package main
 
-import "fmt"
-
-const x int64 = 10
-
-const (
-	idKey   = "id"
-	nameKey = "name"
+import (
+	"fmt"
 )
 
-const z = 20 * 20
-
 func main() {
-	const y = "hello"
-	fmt.Println(x)
-	fmt.Println(y)
-	// x = x + 1
-	// y = "bye"
-	// fmt.Println(x)
-	// fmt.Println(y)
+	var x = [][]int{{1, 2}, {3, 4, 5}}
+	// x[0][0] = 10
+	// x[1] = []int{40, 50}
+	var y = [][]int{{1, 2}, {3, 4, 5}}
+	fmt.Println(x, y)
 }
