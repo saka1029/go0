@@ -5,9 +5,10 @@ import (
 )
 
 func main() {
-	var x = [][]int{{1, 2}, {3, 4, 5}}
-	// x[0][0] = 10
-	// x[1] = []int{40, 50}
-	var y = [][]int{{1, 2}, {3, 4, 5}}
-	fmt.Println(x, y)
+	s := []string{"first", "second", "third"}
+	fmt.Println(s, len(s)) // [first second third] 3
+	clear(s)
+	fmt.Println(s, len(s))                                            // [ ] 3
+	fmt.Printf("s[0]=|%s|, s[1]=|%s|, s[2]=|%s|\n", s[0], s[1], s[2]) // s[0]=||, s[1]=||, s[2]=||
+
 }
