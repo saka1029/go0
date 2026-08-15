@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type Context struct {
@@ -14,16 +15,44 @@ func context() *Context {
 
 type Evaluable interface {
 	eval(context *Context) Evaluable
+	apply(args Evaluable, context *Context) Evaluable
+	toString() string
 }
 
 type Symbol string
-func (symbol Symbol)eval(context *Context) Evaluable {
-	return context.globals[symbol]
+func (this Symbol)eval(context *Context) Evaluable {
+	return context.globals[this]
+}
+func (this Symbol)apply(args Evaluable, context *Context) Evaluable {
+	panic("can't apply")
+}
+func (this Symbol)toString() string {
+	return string(this)
 }
 
 type Integer int
-func (value Integer)eval(context *Context) Evaluable {
-	return value
+func (this Integer)eval(context *Context) Evaluable {
+	return this
+}
+func (this Integer)apply(args Evaluable, context *Context) Evaluable {
+	panic("can't apply");
+}
+func (this Integer)toString() string {
+	return strconv.Itoa(int(this))
+}
+
+type Cons struct {
+	car, cdr Evaluable
+}
+func (this Cons)eval(context *Context) Evaluable {
+	return this.car.eval(context).apply(this.cdr, context)
+}
+func (this Cons)apply(args Evaluable, context *Context) Evaluable {
+	panic("can't apply");
+}
+func (this Cons)toString() string {
+	// return "(" + this.car.toString() + " . " + this.cdr.toString() + ")"
+	return fmt.Sprintf("(%s . %s)", this.car.toString(), this.cdr.toString())
 }
 
 func main() {
@@ -31,4 +60,6 @@ func main() {
 	context.globals[Symbol("symbol")] = Symbol("value")
 	fmt.Println(Symbol("symbol").eval(context))
 	fmt.Println(Integer(123).eval(context))
+	fmt.Println(Cons{Integer(345), Symbol("abc")}.toString())
 }
+
