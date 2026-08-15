@@ -5,6 +5,7 @@ import (
 )
 
 type Symbol string
+type Integer int
 
 type Context struct {
 	globals map[Symbol]Evaluable
@@ -22,9 +23,13 @@ func (symbol Symbol)eval(context *Context) Evaluable {
 	return context.globals[symbol]
 }
 
+func (value Integer)eval(context *Context) Evaluable {
+	return value
+}
+
 func main() {
 	var context *Context = context()
-	symbol := Symbol("symbol")
-	context.globals[symbol] = Symbol("value")
-	fmt.Println(symbol.eval(context))
+	context.globals[Symbol("symbol")] = Symbol("value")
+	fmt.Println(Symbol("symbol").eval(context))
+	fmt.Println(Integer(123).eval(context))
 }
