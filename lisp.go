@@ -51,7 +51,6 @@ func (this Cons)apply(args Evaluable, context *Context) Evaluable {
 	panic("can't apply");
 }
 func (this Cons)toString() string {
-	// return "(" + this.car.toString() + " . " + this.cdr.toString() + ")"
 	return fmt.Sprintf("(%s . %s)", this.car.toString(), this.cdr.toString())
 }
 
