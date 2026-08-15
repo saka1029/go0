@@ -4,9 +4,6 @@ import (
 	"fmt"
 )
 
-type Symbol string
-type Integer int
-
 type Context struct {
 	globals map[Symbol]Evaluable
 }
@@ -19,10 +16,12 @@ type Evaluable interface {
 	eval(context *Context) Evaluable
 }
 
+type Symbol string
 func (symbol Symbol)eval(context *Context) Evaluable {
 	return context.globals[symbol]
 }
 
+type Integer int
 func (value Integer)eval(context *Context) Evaluable {
 	return value
 }
