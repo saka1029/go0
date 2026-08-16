@@ -38,7 +38,7 @@ func eval(e Evaluable, c *Context) Evaluable {
 	case Cons:
 		return apply(eval(v.car, c), v.cdr, c)
 	default:
-		panic(fmt.Sprint("unknown type", v))
+		panic(fmt.Sprint("eval: unknown type ", v))
 	}
 }
 
@@ -56,7 +56,8 @@ func printCons(c Cons) string {
 		if !ok {
 			break;
 		}
-		sb.WriteString(" " + print(cons.car))
+		sb.WriteString(" ")
+		sb.WriteString(print(cons.car))
 		e = cons.cdr
 	}
 	if (e != nil) {
@@ -76,7 +77,7 @@ func print(e Evaluable) string {
 	case Cons:
 		return printCons(v)
 	default:
-		panic(fmt.Sprint("unknown type", v))
+		panic(fmt.Sprint("print: unknown type ", v))
 	}
 }
 
@@ -89,5 +90,6 @@ func main() {
 	fmt.Println(print(eval(123, context)))
 	fmt.Println(print(list(123, "a", 3, 4)))
 	fmt.Println(print(Cons{123, "a"}))
+	fmt.Println(print(eval(2.3, context)))
 }
 
