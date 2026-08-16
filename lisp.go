@@ -44,6 +44,13 @@ type Evaluable interface {
 type Cons struct {
 	car, cdr Evaluable
 }
+func list(elements ...Evaluable) Evaluable {
+	var result Evaluable = nil
+	for i := len(elements) - 1; i >= 0; i-- {
+		result = Cons{elements[i], result}
+	}
+	return result
+}
 // func (this Cons)eval(context *Context) Evaluable {
 // 	return this.car.eval(context).apply(this.cdr, context)
 // }
@@ -90,6 +97,7 @@ func main() {
 	context.globals["symbol"] = "value"
 	fmt.Println(eval("symbol", context))
 	fmt.Println(eval(123, context))
+	fmt.Println(list(123, "a", 3, 4))
 	// fmt.Println(Symbol("symbol").eval(context))
 	// fmt.Println(Integer(123).eval(context))
 	// fmt.Println(Cons{Integer(345), Symbol("abc")}.toString())
