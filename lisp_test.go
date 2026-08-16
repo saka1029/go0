@@ -81,7 +81,7 @@ func stringLength(b byte) int {
 	case b&0b11111000 == 0b11110000:
 		return 4
 	default:
-		return -1
+		return -999
 	}
 }
 
@@ -95,6 +95,9 @@ func newStringReader(s string) *StringReader {
 }
 
 func (this *StringReader) get() string {
+	if this.index >= len(this.s) {
+		return ""
+	}
 	length := stringLength(this.s[this.index])
 	result := this.s[this.index : this.index+length]
 	this.index += length
@@ -126,4 +129,5 @@ func TestString(t *testing.T) {
 	stringTest2(t, sr, "ä")
 	stringTest2(t, sr, "あ")
 	stringTest2(t, sr, "𩸽")
+	stringTest2(t, sr, "")
 }
