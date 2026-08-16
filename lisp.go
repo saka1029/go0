@@ -111,12 +111,10 @@ func eval(e Evaluable, c *Context) Evaluable {
 
 func printCons(c Cons) string {
 	var sb strings.Builder
-	if c.car == Symbol("quote") {
-		if cddr, ok := c.cdr.(Cons); ok && cddr.cdr == nil {
-			sb.WriteString("'")
-			sb.WriteString(print(cddr.car))
-			return sb.String()
-		}
+	if cdr, ok := c.cdr.(Cons); ok && c.car == Symbol("quote") && cdr.cdr == nil {
+		sb.WriteString("'")
+		sb.WriteString(print(cdr.car))
+		return sb.String()
 	}
 	sb.WriteString("(")
 	sb.WriteString(print(c.car))
