@@ -157,6 +157,9 @@ func print(e Evaluable) string {
 	case Cons:
 		return printCons(v)
 	default:
+		if e == nil {
+			return "()"
+		}
 		panic(fmt.Sprint("print: unknown type ", v))
 	}
 }

@@ -50,3 +50,22 @@ func TestArithmetic(t *testing.T) {
 	evalTest(t, c, 1, list(sym("/"), 3, 2))
 	evalTest(t, c, 13, list(sym("/"), 1001, 7, 11))
 }
+
+func printTest(t *testing.T, expected string, e Evaluable) {
+	actual := print(e)
+	fmt.Println("TestPrint:", actual)
+	if actual != expected {
+		t.Errorf("print %s not %s", actual, expected)
+	}
+}
+
+func TestPrint(t *testing.T) {
+	printTest(t, "abc", sym("abc"))
+	printTest(t, "123", 123)
+	printTest(t, "true", true)
+	printTest(t, "()", list())
+	printTest(t, "(1 a)", list(1, sym("a")))
+	printTest(t, "'(1 a)", quote(list(1, sym("a"))))
+	printTest(t, "(quote . a)", cons(sym("quote"), sym("a")))
+
+}
