@@ -24,17 +24,6 @@ func evlis(args Evaluable, c *Context) Evaluable {
 
 func intArithmetic(args Evaluable, unit int, f func(a, b int) int, c *Context) int {
 	args = evlis(args, c)
-	for {
-		if cons, ok := args.(Cons); ok {
-			unit = f(unit, cons.car.(int))
-			args = cons.cdr
-		} else {
-			return unit
-		}
-	}
-}
-func intArithmeticMinus(args Evaluable, unit int, f func(a, b int) int, c *Context) int {
-	args = evlis(args, c)
 	var count, prev int
 	for {
 		if cons, ok := args.(Cons); ok {
@@ -71,13 +60,13 @@ func context() *Context {
 		return intArithmetic(args, 0, func(a, b int) int { return a + b }, c)
 	}
 	context.globals[Symbol("-")] = func(args Evaluable, c *Context) Evaluable {
-		return intArithmeticMinus(args, 0, func(a, b int) int { return a - b }, c)
+		return intArithmetic(args, 0, func(a, b int) int { return a - b }, c)
 	}
 	context.globals[Symbol("*")] = func(args Evaluable, c *Context) Evaluable {
 		return intArithmetic(args, 1, func(a, b int) int { return a * b }, c)
 	}
 	context.globals[Symbol("/")] = func(args Evaluable, c *Context) Evaluable {
-		return intArithmeticMinus(args, 1, func(a, b int) int { return a / b }, c)
+		return intArithmetic(args, 1, func(a, b int) int { return a / b }, c)
 	}
 	return context
 }
