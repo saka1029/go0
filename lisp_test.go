@@ -72,7 +72,7 @@ func TestPrint(t *testing.T) {
 
 func stringLength(b byte) int {
 	switch {
-	case b < 0x80:
+	case b&0b10000000 == 0b00000000:
 		return 1
 	case b&0b11100000 == 0b11000000:
 		return 2
@@ -95,9 +95,9 @@ func newStringReader(s string) *StringReader {
 }
 
 func (this *StringReader) get() string {
-	i := stringLength(this.s[this.index])
-	result := this.s[this.index : this.index+i]
-	this.index += i
+	length := stringLength(this.s[this.index])
+	result := this.s[this.index : this.index+length]
+	this.index += length
 	return result
 }
 
