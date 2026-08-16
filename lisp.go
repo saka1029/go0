@@ -65,8 +65,16 @@ func intArithmetic(args Evaluable, unit int, f func(a, b int) int, c *Env) int {
 	}
 }
 
-func env() *Env {
-	env := &Env{map[Symbol]Evaluable{}, nil}
+func env(previous ...*Env) *Env {
+	var env *Env
+	switch len(previous) {
+	case 0:
+		env = &Env{map[Symbol]Evaluable{}, nil}
+	case 1:
+		env = &Env{map[Symbol]Evaluable{}, previous[0]}
+	default:
+		panic("env() Too many args")
+	}
 	env.Define(Symbol("quote"), func(args Evaluable, c *Env) Evaluable {
 		return args.(Cons).car
 	})
