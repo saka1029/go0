@@ -10,7 +10,11 @@ type Context struct {
 }
 
 func context() *Context {
-	return &Context{map[Symbol]Evaluable{}}
+	context := &Context{map[Symbol]Evaluable{}}
+	context.globals[Symbol("quote")] = func(args Evaluable, c *Context) Evaluable {
+		return args.(Cons).car
+	}
+	return context
 }
 
 type Evaluable interface {
@@ -21,6 +25,11 @@ type Symbol string
 type Cons struct {
 	car, cdr Evaluable
 }
+
+func cons(car, cdr Evaluable) Cons {
+	return Cons{car, cdr}
+}
+
 func list(elements ...Evaluable) Evaluable {
 	var result Evaluable = nil
 	for i := len(elements) - 1; i >= 0; i-- {
@@ -36,31 +45,35 @@ func eval(e Evaluable, c *Context) Evaluable {
 	case Symbol:
 		return c.globals[v]
 	case Cons:
-		return apply(eval(v.car, c), v.cdr, c)
+		return eval(v.car, c).(func(args Evaluable, c *Context) Evaluable)(v.cdr, c)
 	default:
 		panic(fmt.Sprint("eval: unknown type ", v))
 	}
 }
 
-func apply(e Evaluable, args Evaluable, c *Context) Evaluable {
-	return nil
-}
-
 func printCons(c Cons) string {
 	var sb strings.Builder
+	if c.car == Symbol("quote") {
+		cddr, ok := c.cdr.(Cons)
+		if ok && cddr.cdr == nil {
+			sb.WriteString("'")
+			sb.WriteString(print(cddr.car))
+			return sb.String()
+		}
+	}
 	sb.WriteString("(")
 	sb.WriteString(print(c.car))
-	e := c.cdr;
+	e := c.cdr
 	for true {
 		cons, ok := e.(Cons)
 		if !ok {
-			break;
+			break
 		}
 		sb.WriteString(" ")
 		sb.WriteString(print(cons.car))
 		e = cons.cdr
 	}
-	if (e != nil) {
+	if e != nil {
 		sb.WriteString(" . ")
 		sb.WriteString(print(e))
 	}
@@ -74,6 +87,8 @@ func print(e Evaluable) string {
 		return fmt.Sprint(v)
 	case string:
 		return v
+	case Symbol:
+		return string(v)
 	case Cons:
 		return printCons(v)
 	default:
@@ -89,7 +104,11 @@ func main() {
 	fmt.Println(print(eval(Symbol("symbol"), context)))
 	fmt.Println(print(eval(123, context)))
 	fmt.Println(print(list(123, "a", 3, 4)))
-	fmt.Println(print(Cons{123, "a"}))
-	fmt.Println(print(eval(2.3, context)))
+	fmt.Println(print(cons(123, "a")))
+	fmt.Println(print(list(Symbol("quote"), list("a"))))
+	fmt.Println(print(eval(list(Symbol("quote"), list("a")), context)))
+	fmt.Println(print(eval(list(Symbol("quote"), Symbol("b")), context)))
+	fmt.Println(print(cons(Symbol("quote"), Symbol("b"))))
+	// fmt.Println(print(eval(cons(Symbol("quote"), Symbol("b")), context)))
+	// fmt.Println(print(eval(2.3, context)))
 }
-
