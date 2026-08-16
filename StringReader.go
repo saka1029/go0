@@ -20,7 +20,7 @@ type StringReader struct {
 	index int
 }
 
-func newStringReader(s string) *StringReader {
+func NewStringReader(s string) *StringReader {
 	return &StringReader{s, 0}
 }
 

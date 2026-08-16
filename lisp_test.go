@@ -70,14 +70,14 @@ func TestPrint(t *testing.T) {
 	printTest(t, "(quote . a)", cons(sym("quote"), sym("a")))
 }
 
-func stringTest(t *testing.T, s string, expected int) {
+func stringReaderTest(t *testing.T, s string, expected int) {
 	actual := stringLength(s[0])
 	fmt.Printf("%s length=%d\n", s, actual)
 	if expected != actual {
 		t.Errorf("TestString %s -> %d not %d", s, actual, expected)
 	}
 }
-func stringTest2(t *testing.T, sr *StringReader, expected string) {
+func stringReaderTest2(t *testing.T, sr *StringReader, expected string) {
 	actual := sr.Get()
 	fmt.Printf("%s expected=%s\n", actual, expected)
 	if expected != actual {
@@ -85,15 +85,15 @@ func stringTest2(t *testing.T, sr *StringReader, expected string) {
 	}
 }
 
-func TestString(t *testing.T) {
-	stringTest(t, "a", 1)
-	stringTest(t, "ä", 2)
-	stringTest(t, "あ", 3)
-	stringTest(t, "𩸽", 4)
-	sr := newStringReader("aäあ𩸽")
-	stringTest2(t, sr, "a")
-	stringTest2(t, sr, "ä")
-	stringTest2(t, sr, "あ")
-	stringTest2(t, sr, "𩸽")
-	stringTest2(t, sr, "")
+func TestStringReader(t *testing.T) {
+	stringReaderTest(t, "a", 1)
+	stringReaderTest(t, "ä", 2)
+	stringReaderTest(t, "あ", 3)
+	stringReaderTest(t, "𩸽", 4)
+	sr := NewStringReader("aäあ𩸽")
+	stringReaderTest2(t, sr, "a")
+	stringReaderTest2(t, sr, "ä")
+	stringReaderTest2(t, sr, "あ")
+	stringReaderTest2(t, sr, "𩸽")
+	stringReaderTest2(t, sr, "")
 }
