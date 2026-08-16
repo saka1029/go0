@@ -70,40 +70,6 @@ func TestPrint(t *testing.T) {
 	printTest(t, "(quote . a)", cons(sym("quote"), sym("a")))
 }
 
-func stringLength(b byte) int {
-	switch {
-	case b&0b10000000 == 0b00000000:
-		return 1
-	case b&0b11100000 == 0b11000000:
-		return 2
-	case b&0b11110000 == 0b11100000:
-		return 3
-	case b&0b11111000 == 0b11110000:
-		return 4
-	default:
-		return -999
-	}
-}
-
-type StringReader struct {
-	s     string
-	index int
-}
-
-func newStringReader(s string) *StringReader {
-	return &StringReader{s, 0}
-}
-
-func (this *StringReader) get() string {
-	if this.index >= len(this.s) {
-		return ""
-	}
-	length := stringLength(this.s[this.index])
-	result := this.s[this.index : this.index+length]
-	this.index += length
-	return result
-}
-
 func stringTest(t *testing.T, s string, expected int) {
 	actual := stringLength(s[0])
 	fmt.Printf("%s length=%d\n", s, actual)
@@ -112,7 +78,7 @@ func stringTest(t *testing.T, s string, expected int) {
 	}
 }
 func stringTest2(t *testing.T, sr *StringReader, expected string) {
-	actual := sr.get()
+	actual := sr.Get()
 	fmt.Printf("%s expected=%s\n", actual, expected)
 	if expected != actual {
 		t.Errorf("TestString %s not %s", actual, expected)
