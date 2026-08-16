@@ -9,10 +9,28 @@ type Context struct {
 	globals map[Symbol]Evaluable
 }
 
+func evlis(args Evaluable, c *Context) Evaluable {
+	result := []Evaluable{}
+	for {
+		cons, ok := args.(Cons)
+		if !ok {
+			return listSlice(result)
+		}
+		result = append(result, eval(cons.car, c))
+		args = cons.cdr
+	}
+}
+
 func context() *Context {
 	context := &Context{map[Symbol]Evaluable{}}
 	context.globals[Symbol("quote")] = func(args Evaluable, c *Context) Evaluable {
 		return args.(Cons).car
+	}
+	context.globals[Symbol("car")] = func(args Evaluable, c *Context) Evaluable {
+		return evlis(args, c).(Cons).car.(Cons).car
+	}
+	context.globals[Symbol("cdr")] = func(args Evaluable, c *Context) Evaluable {
+		return evlis(args, c).(Cons).car.(Cons).cdr
 	}
 	return context
 }
@@ -31,6 +49,14 @@ func cons(car, cdr Evaluable) Cons {
 }
 
 func list(elements ...Evaluable) Evaluable {
+	var result Evaluable = nil
+	for i := len(elements) - 1; i >= 0; i-- {
+		result = Cons{elements[i], result}
+	}
+	return result
+}
+
+func listSlice(elements []Evaluable) Evaluable {
 	var result Evaluable = nil
 	for i := len(elements) - 1; i >= 0; i-- {
 		result = Cons{elements[i], result}
@@ -109,6 +135,9 @@ func main() {
 	fmt.Println(print(eval(list(Symbol("quote"), list("a")), context)))
 	fmt.Println(print(eval(list(Symbol("quote"), Symbol("b")), context)))
 	fmt.Println(print(cons(Symbol("quote"), Symbol("b"))))
+	fmt.Println(print(list(Symbol("quote"), Symbol("b"), 123)))
+	fmt.Println(print(eval(list(Symbol("car"), list(Symbol("quote"), list("a", "b", "c"))), context)))
+	fmt.Println(print(eval(list(Symbol("cdr"), list(Symbol("quote"), list("a", "b", "c"))), context)))
 	// fmt.Println(print(eval(cons(Symbol("quote"), Symbol("b")), context)))
 	// fmt.Println(print(eval(2.3, context)))
 }
