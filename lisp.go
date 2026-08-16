@@ -17,7 +17,7 @@ func evlis(args Evaluable, c *Context) Evaluable {
 			result = append(result, eval(cons.car, c))
 			args = cons.cdr
 		} else {
-			return listSlice(result)
+			return list(result...)
 		}
 	}
 }
@@ -96,14 +96,6 @@ func list(elements ...Evaluable) Evaluable {
 	return result
 }
 
-func listSlice(elements []Evaluable) Evaluable {
-	var result Evaluable = nil
-	for _, e := range slices.Backward(elements) {
-		result = Cons{e, result}
-	}
-	return result
-}
-
 func eval(e Evaluable, c *Context) Evaluable {
 	switch v := e.(type) {
 	case int, string, bool:
@@ -129,14 +121,14 @@ func printCons(c Cons) string {
 	sb.WriteString("(")
 	sb.WriteString(print(c.car))
 	e := c.cdr
-	for true {
-		cons, ok := e.(Cons)
-		if !ok {
+	for {
+		if cons, ok := e.(Cons); ok {
+			sb.WriteString(" ")
+			sb.WriteString(print(cons.car))
+			e = cons.cdr
+		} else {
 			break
 		}
-		sb.WriteString(" ")
-		sb.WriteString(print(cons.car))
-		e = cons.cdr
 	}
 	if e != nil {
 		sb.WriteString(" . ")

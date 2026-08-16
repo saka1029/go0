@@ -66,6 +66,7 @@ func TestPrint(t *testing.T) {
 	printTest(t, "()", list())
 	printTest(t, "(1 a)", list(1, sym("a")))
 	printTest(t, "'(1 a)", quote(list(1, sym("a"))))
+	printTest(t, "(1 . a)", cons(1, sym("a")))
 	printTest(t, "(quote . a)", cons(sym("quote"), sym("a")))
 
 }
