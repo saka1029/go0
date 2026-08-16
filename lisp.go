@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -12,12 +13,42 @@ type Context struct {
 func evlis(args Evaluable, c *Context) Evaluable {
 	result := []Evaluable{}
 	for {
-		cons, ok := args.(Cons)
-		if !ok {
+		if cons, ok := args.(Cons); ok {
+			result = append(result, eval(cons.car, c))
+			args = cons.cdr
+		} else {
 			return listSlice(result)
 		}
-		result = append(result, eval(cons.car, c))
-		args = cons.cdr
+	}
+}
+
+func intArithmetic(args Evaluable, unit int, f func(a, b int) int, c *Context) int {
+	args = evlis(args, c)
+	for {
+		if cons, ok := args.(Cons); ok {
+			unit = f(unit, cons.car.(int))
+			args = cons.cdr
+		} else {
+			return unit
+		}
+	}
+}
+func intArithmeticMinus(args Evaluable, unit int, f func(a, b int) int, c *Context) int {
+	args = evlis(args, c)
+	var count, prev int
+	for {
+		if cons, ok := args.(Cons); ok {
+			value := cons.car.(int)
+			if count == 1 {
+				unit = prev
+			}
+			unit = f(unit, value)
+			count++
+			prev = value
+			args = cons.cdr
+		} else {
+			return unit
+		}
 	}
 }
 
@@ -32,6 +63,22 @@ func context() *Context {
 	context.globals[Symbol("cdr")] = func(args Evaluable, c *Context) Evaluable {
 		return evlis(args, c).(Cons).car.(Cons).cdr
 	}
+	context.globals[Symbol("cons")] = func(args Evaluable, c *Context) Evaluable {
+		evaled := evlis(args, c)
+		return cons(evaled.(Cons).car, evaled.(Cons).cdr.(Cons).car)
+	}
+	context.globals[Symbol("+")] = func(args Evaluable, c *Context) Evaluable {
+		return intArithmetic(args, 0, func(a, b int) int { return a + b }, c)
+	}
+	context.globals[Symbol("-")] = func(args Evaluable, c *Context) Evaluable {
+		return intArithmeticMinus(args, 0, func(a, b int) int { return a - b }, c)
+	}
+	context.globals[Symbol("*")] = func(args Evaluable, c *Context) Evaluable {
+		return intArithmetic(args, 1, func(a, b int) int { return a * b }, c)
+	}
+	context.globals[Symbol("/")] = func(args Evaluable, c *Context) Evaluable {
+		return intArithmeticMinus(args, 1, func(a, b int) int { return a / b }, c)
+	}
 	return context
 }
 
@@ -39,6 +86,10 @@ type Evaluable interface {
 }
 
 type Symbol string
+
+func sym(name string) Symbol {
+	return Symbol(name)
+}
 
 type Cons struct {
 	car, cdr Evaluable
@@ -50,23 +101,23 @@ func cons(car, cdr Evaluable) Cons {
 
 func list(elements ...Evaluable) Evaluable {
 	var result Evaluable = nil
-	for i := len(elements) - 1; i >= 0; i-- {
-		result = Cons{elements[i], result}
+	for _, e := range slices.Backward(elements) {
+		result = Cons{e, result}
 	}
 	return result
 }
 
 func listSlice(elements []Evaluable) Evaluable {
 	var result Evaluable = nil
-	for i := len(elements) - 1; i >= 0; i-- {
-		result = Cons{elements[i], result}
+	for _, e := range slices.Backward(elements) {
+		result = Cons{e, result}
 	}
 	return result
 }
 
 func eval(e Evaluable, c *Context) Evaluable {
 	switch v := e.(type) {
-	case int, string:
+	case int, string, bool:
 		return v
 	case Symbol:
 		return c.globals[v]
@@ -80,8 +131,7 @@ func eval(e Evaluable, c *Context) Evaluable {
 func printCons(c Cons) string {
 	var sb strings.Builder
 	if c.car == Symbol("quote") {
-		cddr, ok := c.cdr.(Cons)
-		if ok && cddr.cdr == nil {
+		if cddr, ok := c.cdr.(Cons); ok && cddr.cdr == nil {
 			sb.WriteString("'")
 			sb.WriteString(print(cddr.car))
 			return sb.String()
@@ -109,7 +159,7 @@ func printCons(c Cons) string {
 
 func print(e Evaluable) string {
 	switch v := e.(type) {
-	case int:
+	case int, bool:
 		return fmt.Sprint(v)
 	case string:
 		return v
@@ -132,12 +182,8 @@ func main() {
 	fmt.Println(print(list(123, "a", 3, 4)))
 	fmt.Println(print(cons(123, "a")))
 	fmt.Println(print(list(Symbol("quote"), list("a"))))
-	fmt.Println(print(eval(list(Symbol("quote"), list("a")), context)))
-	fmt.Println(print(eval(list(Symbol("quote"), Symbol("b")), context)))
 	fmt.Println(print(cons(Symbol("quote"), Symbol("b"))))
 	fmt.Println(print(list(Symbol("quote"), Symbol("b"), 123)))
-	fmt.Println(print(eval(list(Symbol("car"), list(Symbol("quote"), list("a", "b", "c"))), context)))
-	fmt.Println(print(eval(list(Symbol("cdr"), list(Symbol("quote"), list("a", "b", "c"))), context)))
 	// fmt.Println(print(eval(cons(Symbol("quote"), Symbol("b")), context)))
 	// fmt.Println(print(eval(2.3, context)))
 }

@@ -13,9 +13,40 @@ func evalTest(t *testing.T, c *Context, expected Evaluable, e Evaluable) {
 	}
 }
 
+func quote(e Evaluable) Evaluable {
+	return list(sym("quote"), e)
+}
+
 func TestEval(t *testing.T) {
 	c := context()
-	evalTest(t, c, list(1, 2, 3, 4), list(Symbol("quote"), list(1, 2, 3, 4)))
-	evalTest(t, c, 1, list(Symbol("car"), list(Symbol("quote"), list(1, 2, 3, 4))))
-	evalTest(t, c, list(2, 3, 4), list(Symbol("cdr"), list(Symbol("quote"), list(1, 2, 3, 4))))
+	evalTest(t, c, "abc", "abc")
+	evalTest(t, c, 123, 123)
+	evalTest(t, c, true, true)
+	evalTest(t, c, sym("a"), quote(sym("a")))
+	evalTest(t, c, list(1, 2, 3, 4), quote(list(1, 2, 3, 4)))
+	evalTest(t, c, 1, list(sym("car"), quote(list(1, 2, 3, 4))))
+	evalTest(t, c, list(2, 3, 4), list(sym("cdr"), quote(list(1, 2, 3, 4))))
+	evalTest(t, c, list(sym("a"), 1, 2, 3, 4), list(sym("cons"), quote(sym("a")), quote(list(1, 2, 3, 4))))
+	evalTest(t, c, cons(sym("a"), sym("b")), list(sym("cons"), quote(sym("a")), quote(sym("b"))))
+}
+func TestArithmetic(t *testing.T) {
+	c := context()
+	evalTest(t, c, 0, list(sym("+")))
+	evalTest(t, c, 1, list(sym("+"), 1))
+	evalTest(t, c, 3, list(sym("+"), 1, 2))
+	evalTest(t, c, 10, list(sym("+"), 1, 2, 3, 4))
+	evalTest(t, c, 15, list(sym("+"), 1, 2, list(sym("+"), 3, 4), 5))
+	evalTest(t, c, 0, list(sym("-")))
+	evalTest(t, c, -1, list(sym("-"), 1))
+	evalTest(t, c, 1, list(sym("-"), 3, 2))
+	evalTest(t, c, -8, list(sym("-"), 1, 2, 3, 4))
+	evalTest(t, c, 1, list(sym("*")))
+	evalTest(t, c, 3, list(sym("*"), 3))
+	evalTest(t, c, 6, list(sym("*"), 2, 3))
+	evalTest(t, c, 24, list(sym("*"), 1, 2, 3, 4))
+	evalTest(t, c, 70, list(sym("*"), 1, 2, list(sym("+"), 3, 4), 5))
+	evalTest(t, c, 1, list(sym("/")))
+	evalTest(t, c, 0, list(sym("/"), 10))
+	evalTest(t, c, 1, list(sym("/"), 3, 2))
+	evalTest(t, c, 13, list(sym("/"), 1001, 7, 11))
 }
