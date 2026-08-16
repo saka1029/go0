@@ -2,44 +2,21 @@ package main
 
 import (
 	"fmt"
-	// "strconv"
+	"strings"
 )
 
 type Context struct {
-	globals map[string]Evaluable
+	globals map[Symbol]Evaluable
 }
 
 func context() *Context {
-	return &Context{map[string]Evaluable{}}
+	return &Context{map[Symbol]Evaluable{}}
 }
 
 type Evaluable interface {
-// 	// eval(context *Context) Evaluable
-// 	// apply(args Evaluable, context *Context) Evaluable
-// 	// toString() string
 }
 
-// type Symbol string
-// func (this Symbol)eval(context *Context) Evaluable {
-// 	return context.globals[this]
-// }
-// func (this Symbol)apply(args Evaluable, context *Context) Evaluable {
-// 	panic("can't apply")
-// }
-// func (this Symbol)toString() string {
-// 	return string(this)
-// }
-
-// type Integer int
-// func (this Integer)eval(context *Context) Evaluable {
-// 	return this
-// }
-// func (this Integer)apply(args Evaluable, context *Context) Evaluable {
-// 	panic("can't apply");
-// }
-// func (this Integer)toString() string {
-// 	return strconv.Itoa(int(this))
-// }
+type Symbol string
 
 type Cons struct {
 	car, cdr Evaluable
@@ -51,39 +28,17 @@ func list(elements ...Evaluable) Evaluable {
 	}
 	return result
 }
-// func (this Cons)eval(context *Context) Evaluable {
-// 	return this.car.eval(context).apply(this.cdr, context)
-// }
-// func (this Cons)apply(args Evaluable, context *Context) Evaluable {
-// 	panic("can't apply");
-// }
-// func (this Cons)toString() string {
-// 	return fmt.Sprintf("(%s . %s)", this.car.toString(), this.cdr.toString())
-// }
-
-func check(v interface{}) {
-	switch x := v.(type) {
-	case int:
-		fmt.Println("int ", x)
-	// case Integer:
-	// 	fmt.Println("Integer %d\n", x)
-	case string:
-		fmt.Println("string ", x)
-	default:
-		fmt.Println("unknown ", x)
-	}
-}
 
 func eval(e Evaluable, c *Context) Evaluable {
 	switch v := e.(type) {
-	case int:
+	case int, string:
 		return v
-	case string:
+	case Symbol:
 		return c.globals[v]
 	case Cons:
 		return apply(eval(v.car, c), v.cdr, c)
 	default:
-		panic(fmt.Sprintf("unknown type %T", v))
+		panic(fmt.Sprint("unknown type", v))
 	}
 }
 
@@ -91,20 +46,48 @@ func apply(e Evaluable, args Evaluable, c *Context) Evaluable {
 	return nil
 }
 
+func printCons(c Cons) string {
+	var sb strings.Builder
+	sb.WriteString("(")
+	sb.WriteString(print(c.car))
+	e := c.cdr;
+	for true {
+		cons, ok := e.(Cons)
+		if !ok {
+			break;
+		}
+		sb.WriteString(" " + print(cons.car))
+		e = cons.cdr
+	}
+	if (e != nil) {
+		sb.WriteString(" . ")
+		sb.WriteString(print(e))
+	}
+	sb.WriteString(")")
+	return sb.String()
+}
+
+func print(e Evaluable) string {
+	switch v := e.(type) {
+	case int:
+		return fmt.Sprint(v)
+	case string:
+		return v
+	case Cons:
+		return printCons(v)
+	default:
+		panic(fmt.Sprint("unknown type", v))
+	}
+}
+
 func main() {
 	var context *Context = context()
 	fmt.Println(context)
 	context.globals["symbol"] = "value"
-	fmt.Println(eval("symbol", context))
-	fmt.Println(eval(123, context))
-	fmt.Println(list(123, "a", 3, 4))
-	// fmt.Println(Symbol("symbol").eval(context))
-	// fmt.Println(Integer(123).eval(context))
-	// fmt.Println(Cons{Integer(345), Symbol("abc")}.toString())
-	// check(123)
-	// check("abc")
-	// check(Cons{2,3})
-	// check(Integer(123))
-	// check(Symbol("sym"))
+	fmt.Println(print(eval("string", context)))
+	fmt.Println(print(eval(Symbol("symbol"), context)))
+	fmt.Println(print(eval(123, context)))
+	fmt.Println(print(list(123, "a", 3, 4)))
+	fmt.Println(print(Cons{123, "a"}))
 }
 
