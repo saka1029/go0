@@ -7,7 +7,30 @@ import (
 )
 
 type Context struct {
-	globals map[Symbol]Evaluable
+	globals  map[Symbol]Evaluable
+	previous *Context
+}
+
+func (this *Context) Get(key Symbol) Evaluable {
+	for cur := this; cur != nil; cur = cur.previous {
+		if value, ok := cur.globals[key]; ok {
+			return value
+		}
+	}
+	return nil
+}
+
+func (this *Context) Set(key Symbol, value Evaluable) {
+	for cur := this; cur != nil; cur = cur.previous {
+		if _, ok := cur.globals[key]; ok {
+			cur.globals[key] = value
+			return
+		}
+	}
+}
+
+func (this *Context) Define(key Symbol, value Evaluable) {
+	this.globals[key] = value
 }
 
 func evlis(args Evaluable, c *Context) Evaluable {
@@ -42,32 +65,32 @@ func intArithmetic(args Evaluable, unit int, f func(a, b int) int, c *Context) i
 }
 
 func context() *Context {
-	context := &Context{map[Symbol]Evaluable{}}
-	context.globals[Symbol("quote")] = func(args Evaluable, c *Context) Evaluable {
+	context := &Context{map[Symbol]Evaluable{}, nil}
+	context.Define(Symbol("quote"), func(args Evaluable, c *Context) Evaluable {
 		return args.(Cons).car
-	}
-	context.globals[Symbol("car")] = func(args Evaluable, c *Context) Evaluable {
+	})
+	context.Define(Symbol("car"), func(args Evaluable, c *Context) Evaluable {
 		return evlis(args, c).(Cons).car.(Cons).car
-	}
-	context.globals[Symbol("cdr")] = func(args Evaluable, c *Context) Evaluable {
+	})
+	context.Define(Symbol("cdr"), func(args Evaluable, c *Context) Evaluable {
 		return evlis(args, c).(Cons).car.(Cons).cdr
-	}
-	context.globals[Symbol("cons")] = func(args Evaluable, c *Context) Evaluable {
+	})
+	context.Define(Symbol("cons"), func(args Evaluable, c *Context) Evaluable {
 		evaled := evlis(args, c)
 		return cons(evaled.(Cons).car, evaled.(Cons).cdr.(Cons).car)
-	}
-	context.globals[Symbol("+")] = func(args Evaluable, c *Context) Evaluable {
+	})
+	context.Define(Symbol("+"), func(args Evaluable, c *Context) Evaluable {
 		return intArithmetic(args, 0, func(a, b int) int { return a + b }, c)
-	}
-	context.globals[Symbol("-")] = func(args Evaluable, c *Context) Evaluable {
+	})
+	context.Define(Symbol("-"), func(args Evaluable, c *Context) Evaluable {
 		return intArithmetic(args, 0, func(a, b int) int { return a - b }, c)
-	}
-	context.globals[Symbol("*")] = func(args Evaluable, c *Context) Evaluable {
+	})
+	context.Define(Symbol("*"), func(args Evaluable, c *Context) Evaluable {
 		return intArithmetic(args, 1, func(a, b int) int { return a * b }, c)
-	}
-	context.globals[Symbol("/")] = func(args Evaluable, c *Context) Evaluable {
+	})
+	context.Define(Symbol("/"), func(args Evaluable, c *Context) Evaluable {
 		return intArithmetic(args, 1, func(a, b int) int { return a / b }, c)
-	}
+	})
 	return context
 }
 
