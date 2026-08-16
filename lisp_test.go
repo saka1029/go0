@@ -5,17 +5,17 @@ import (
 	"testing"
 )
 
-func evalTest(t *testing.T, c *Context, expected string, e Evaluable) {
+func evalTest(t *testing.T, c *Context, expected Evaluable, e Evaluable) {
 	fmt.Println("TestEval:", print(e))
 	actual := eval(e, c)
-	actualStr := print(eval(e, c))
-	if actualStr != expected {
-		t.Errorf("eval %s -> %s not %s", print(e), print(actual), expected)
+	if actual != expected {
+		t.Errorf("eval %s -> %s not %s", print(e), print(actual), print(expected))
 	}
 }
 
 func TestEval(t *testing.T) {
 	c := context()
-	evalTest(t, c, "(1 2 3 4)", list(Symbol("quote"), list(1, 2, 3, 4)))
-	evalTest(t, c, "1", list(Symbol("car"), list(Symbol("quote"), list(1, 2, 3, 4))))
+	evalTest(t, c, list(1, 2, 3, 4), list(Symbol("quote"), list(1, 2, 3, 4)))
+	evalTest(t, c, 1, list(Symbol("car"), list(Symbol("quote"), list(1, 2, 3, 4))))
+	evalTest(t, c, list(2, 3, 4), list(Symbol("cdr"), list(Symbol("quote"), list(1, 2, 3, 4))))
 }
