@@ -6,34 +6,35 @@ import (
 	"strings"
 )
 
-type Context struct {
+type Env struct {
 	globals  map[Symbol]Evaluable
-	previous *Context
+	previous *Env
 }
 
-func (this *Context) Get(key Symbol) Evaluable {
+func (this *Env) Get(key Symbol) Evaluable {
 	for cur := this; cur != nil; cur = cur.previous {
 		if value, ok := cur.globals[key]; ok {
 			return value
 		}
 	}
-	return nil
+	panic(fmt.Sprint("Get: cannot get the value of", key))
 }
 
-func (this *Context) Set(key Symbol, value Evaluable) {
+func (this *Env) Set(key Symbol, value Evaluable) {
 	for cur := this; cur != nil; cur = cur.previous {
 		if _, ok := cur.globals[key]; ok {
 			cur.globals[key] = value
 			return
 		}
 	}
+	panic(fmt.Sprint("Set: cannot set the value of", key))
 }
 
-func (this *Context) Define(key Symbol, value Evaluable) {
+func (this *Env) Define(key Symbol, value Evaluable) {
 	this.globals[key] = value
 }
 
-func evlis(args Evaluable, c *Context) Evaluable {
+func evlis(args Evaluable, c *Env) Evaluable {
 	result := []Evaluable{}
 	for {
 		if cons, ok := args.(Cons); ok {
@@ -45,7 +46,7 @@ func evlis(args Evaluable, c *Context) Evaluable {
 	}
 }
 
-func intArithmetic(args Evaluable, unit int, f func(a, b int) int, c *Context) int {
+func intArithmetic(args Evaluable, unit int, f func(a, b int) int, c *Env) int {
 	args = evlis(args, c)
 	var count, prev int
 	for {
@@ -64,34 +65,34 @@ func intArithmetic(args Evaluable, unit int, f func(a, b int) int, c *Context) i
 	}
 }
 
-func context() *Context {
-	context := &Context{map[Symbol]Evaluable{}, nil}
-	context.Define(Symbol("quote"), func(args Evaluable, c *Context) Evaluable {
+func env() *Env {
+	env := &Env{map[Symbol]Evaluable{}, nil}
+	env.Define(Symbol("quote"), func(args Evaluable, c *Env) Evaluable {
 		return args.(Cons).car
 	})
-	context.Define(Symbol("car"), func(args Evaluable, c *Context) Evaluable {
+	env.Define(Symbol("car"), func(args Evaluable, c *Env) Evaluable {
 		return evlis(args, c).(Cons).car.(Cons).car
 	})
-	context.Define(Symbol("cdr"), func(args Evaluable, c *Context) Evaluable {
+	env.Define(Symbol("cdr"), func(args Evaluable, c *Env) Evaluable {
 		return evlis(args, c).(Cons).car.(Cons).cdr
 	})
-	context.Define(Symbol("cons"), func(args Evaluable, c *Context) Evaluable {
+	env.Define(Symbol("cons"), func(args Evaluable, c *Env) Evaluable {
 		evaled := evlis(args, c)
 		return cons(evaled.(Cons).car, evaled.(Cons).cdr.(Cons).car)
 	})
-	context.Define(Symbol("+"), func(args Evaluable, c *Context) Evaluable {
+	env.Define(Symbol("+"), func(args Evaluable, c *Env) Evaluable {
 		return intArithmetic(args, 0, func(a, b int) int { return a + b }, c)
 	})
-	context.Define(Symbol("-"), func(args Evaluable, c *Context) Evaluable {
+	env.Define(Symbol("-"), func(args Evaluable, c *Env) Evaluable {
 		return intArithmetic(args, 0, func(a, b int) int { return a - b }, c)
 	})
-	context.Define(Symbol("*"), func(args Evaluable, c *Context) Evaluable {
+	env.Define(Symbol("*"), func(args Evaluable, c *Env) Evaluable {
 		return intArithmetic(args, 1, func(a, b int) int { return a * b }, c)
 	})
-	context.Define(Symbol("/"), func(args Evaluable, c *Context) Evaluable {
+	env.Define(Symbol("/"), func(args Evaluable, c *Env) Evaluable {
 		return intArithmetic(args, 1, func(a, b int) int { return a / b }, c)
 	})
-	return context
+	return env
 }
 
 type Evaluable interface {
@@ -119,14 +120,14 @@ func list(elements ...Evaluable) Evaluable {
 	return result
 }
 
-func eval(e Evaluable, c *Context) Evaluable {
+func eval(e Evaluable, c *Env) Evaluable {
 	switch v := e.(type) {
 	case int, string, bool:
 		return v
 	case Symbol:
 		return c.globals[v]
 	case Cons:
-		return eval(v.car, c).(func(args Evaluable, c *Context) Evaluable)(v.cdr, c)
+		return eval(v.car, c).(func(args Evaluable, c *Env) Evaluable)(v.cdr, c)
 	default:
 		panic(fmt.Sprint("eval: unknown type ", v))
 	}
@@ -178,7 +179,7 @@ func print(e Evaluable) string {
 }
 
 func main() {
-	var context *Context = context()
+	var context *Env = env()
 	fmt.Println(context)
 	context.globals["symbol"] = "value"
 	fmt.Println(print(eval("string", context)))
