@@ -68,5 +68,62 @@ func TestPrint(t *testing.T) {
 	printTest(t, "'(1 a)", quote(list(1, sym("a"))))
 	printTest(t, "(1 . a)", cons(1, sym("a")))
 	printTest(t, "(quote . a)", cons(sym("quote"), sym("a")))
+}
 
+func stringLength(b byte) int {
+	switch {
+	case b < 0x80:
+		return 1
+	case b&0b11100000 == 0b11000000:
+		return 2
+	case b&0b11110000 == 0b11100000:
+		return 3
+	case b&0b11111000 == 0b11110000:
+		return 4
+	default:
+		return -1
+	}
+}
+
+type StringReader struct {
+	s     string
+	index int
+}
+
+func newStringReader(s string) *StringReader {
+	return &StringReader{s, 0}
+}
+
+func (this *StringReader) get() string {
+	i := stringLength(this.s[this.index])
+	result := this.s[this.index : this.index+i]
+	this.index += i
+	return result
+}
+
+func stringTest(t *testing.T, s string, expected int) {
+	actual := stringLength(s[0])
+	fmt.Printf("%s length=%d\n", s, actual)
+	if expected != actual {
+		t.Errorf("TestString %s -> %d not %d", s, actual, expected)
+	}
+}
+func stringTest2(t *testing.T, sr *StringReader, expected string) {
+	actual := sr.get()
+	fmt.Printf("%s expected=%s\n", actual, expected)
+	if expected != actual {
+		t.Errorf("TestString %s not %s", actual, expected)
+	}
+}
+
+func TestString(t *testing.T) {
+	stringTest(t, "a", 1)
+	stringTest(t, "ä", 2)
+	stringTest(t, "あ", 3)
+	stringTest(t, "𩸽", 4)
+	sr := newStringReader("aäあ𩸽")
+	stringTest2(t, sr, "a")
+	stringTest2(t, sr, "ä")
+	stringTest2(t, sr, "あ")
+	stringTest2(t, sr, "𩸽")
 }
