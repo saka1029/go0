@@ -38,8 +38,8 @@ func evlis(args Evaluable, c *Env) Evaluable {
 	result := []Evaluable{}
 	for {
 		if cons, ok := args.(Cons); ok {
-			result = append(result, eval(cons.car, c))
-			args = cons.cdr
+			result = append(result, eval(cons.Car(), c))
+			args = cons.Cdr()
 		} else {
 			return list(result...)
 		}
@@ -51,14 +51,14 @@ func intArithmetic(args Evaluable, unit int, f func(a, b int) int, c *Env) int {
 	var count, prev int
 	for {
 		if cons, ok := args.(Cons); ok {
-			value := cons.car.(int)
+			value := cons.Car().(int)
 			if count == 1 {
 				unit = prev
 			}
 			unit = f(unit, value)
 			count++
 			prev = value
-			args = cons.cdr
+			args = cons.Cdr()
 		} else {
 			return unit
 		}
@@ -76,17 +76,17 @@ func env(previous ...*Env) *Env {
 		panic("env() Too many args")
 	}
 	env.Define(Symbol("quote"), func(args Evaluable, c *Env) Evaluable {
-		return args.(Cons).car
+		return args.(Cons).Car()
 	})
 	env.Define(Symbol("car"), func(args Evaluable, c *Env) Evaluable {
-		return evlis(args, c).(Cons).car.(Cons).car
+		return evlis(args, c).(Cons).Car().(Cons).Car()
 	})
 	env.Define(Symbol("cdr"), func(args Evaluable, c *Env) Evaluable {
-		return evlis(args, c).(Cons).car.(Cons).cdr
+		return evlis(args, c).(Cons).Car().(Cons).Cdr()
 	})
 	env.Define(Symbol("cons"), func(args Evaluable, c *Env) Evaluable {
 		evaled := evlis(args, c)
-		return cons(evaled.(Cons).car, evaled.(Cons).cdr.(Cons).car)
+		return cons(evaled.(Cons).Car(), evaled.(Cons).Cdr().(Cons).Car())
 	})
 	env.Define(Symbol("+"), func(args Evaluable, c *Env) Evaluable {
 		return intArithmetic(args, 0, func(a, b int) int { return a + b }, c)
@@ -106,6 +106,14 @@ func env(previous ...*Env) *Env {
 type Evaluable interface {
 }
 
+func Equal(left, right Evaluable) bool {
+	if lcons, ok := left.(Cons); ok {
+		return lcons.Equal(right)
+	} else {
+		return left == right
+	}
+}
+
 type Symbol string
 
 func sym(name string) Symbol {
@@ -113,17 +121,33 @@ func sym(name string) Symbol {
 }
 
 type Cons struct {
-	car, cdr Evaluable
+	car, cdr *Evaluable
 }
 
 func cons(car, cdr Evaluable) Cons {
-	return Cons{car, cdr}
+	return Cons{&car, &cdr}
+}
+
+func (this Cons) Car() Evaluable {
+	return *this.car
+}
+
+func (this Cons) Cdr() Evaluable {
+	return *this.cdr
+}
+
+func (this Cons) Equal(right Evaluable) bool {
+	if rcons, ok := right.(Cons); ok {
+		return Equal(this.Car(), rcons.Car()) && Equal(this.Cdr(), rcons.Cdr())
+	} else {
+		return false
+	}
 }
 
 func list(elements ...Evaluable) Evaluable {
 	var result Evaluable = nil
 	for _, e := range slices.Backward(elements) {
-		result = Cons{e, result}
+		result = cons(e, result)
 	}
 	return result
 }
@@ -135,7 +159,7 @@ func eval(e Evaluable, c *Env) Evaluable {
 	case Symbol:
 		return c.globals[v]
 	case Cons:
-		return eval(v.car, c).(func(args Evaluable, c *Env) Evaluable)(v.cdr, c)
+		return eval(v.Car(), c).(func(args Evaluable, c *Env) Evaluable)(v.Cdr(), c)
 	default:
 		panic(fmt.Sprint("eval: unknown type ", v))
 	}
@@ -143,19 +167,19 @@ func eval(e Evaluable, c *Env) Evaluable {
 
 func printCons(c Cons) string {
 	var sb strings.Builder
-	if cdr, ok := c.cdr.(Cons); ok && c.car == Symbol("quote") && cdr.cdr == nil {
+	if cdr, ok := c.Cdr().(Cons); ok && c.Car() == Symbol("quote") && cdr.Cdr() == nil {
 		sb.WriteString("'")
-		sb.WriteString(print(cdr.car))
+		sb.WriteString(print(cdr.Car()))
 		return sb.String()
 	}
 	sb.WriteString("(")
-	sb.WriteString(print(c.car))
-	e := c.cdr
+	sb.WriteString(print(c.Car()))
+	e := c.Cdr()
 	for {
 		if cons, ok := e.(Cons); ok {
 			sb.WriteString(" ")
-			sb.WriteString(print(cons.car))
-			e = cons.cdr
+			sb.WriteString(print(cons.Car()))
+			e = cons.Cdr()
 		} else {
 			break
 		}

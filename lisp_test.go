@@ -8,7 +8,9 @@ import (
 func evalTest(t *testing.T, c *Env, expected Evaluable, e Evaluable) {
 	fmt.Println("TestEval:", print(e))
 	actual := eval(e, c)
-	if actual != expected {
+	// if actual != expected {
+	// if reflect.DeepEqual(actual, expected) {
+	if !Equal(actual, expected) {
 		t.Errorf("eval %s -> %s not %s", print(e), print(actual), print(expected))
 	}
 }
@@ -54,7 +56,7 @@ func TestArithmetic(t *testing.T) {
 func printTest(t *testing.T, expected string, e Evaluable) {
 	actual := print(e)
 	fmt.Println("TestPrint:", actual)
-	if actual != expected {
+	if !Equal(actual, expected) {
 		t.Errorf("print %s not %s", actual, expected)
 	}
 }
