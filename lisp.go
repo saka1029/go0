@@ -106,14 +106,6 @@ func env(previous ...*Env) *Env {
 type Evaluable interface {
 }
 
-func Equal(left, right Evaluable) bool {
-	if lcons, ok := left.(Cons); ok {
-		return lcons.Equal(right)
-	} else {
-		return left == right
-	}
-}
-
 type Symbol string
 
 func sym(name string) Symbol {
@@ -141,6 +133,14 @@ func (this Cons) Equal(right Evaluable) bool {
 		return Equal(this.Car(), rcons.Car()) && Equal(this.Cdr(), rcons.Cdr())
 	} else {
 		return false
+	}
+}
+
+func Equal(left, right Evaluable) bool {
+	if lcons, ok := left.(Cons); ok {
+		return lcons.Equal(right)
+	} else {
+		return left == right
 	}
 }
 
