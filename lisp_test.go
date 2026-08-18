@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
+	"unsafe"
 )
 
 func evalTest(t *testing.T, c *Env, expected Evaluable, e Evaluable) {
@@ -10,7 +12,7 @@ func evalTest(t *testing.T, c *Env, expected Evaluable, e Evaluable) {
 	actual := eval(e, c)
 	// if actual != expected {
 	// if reflect.DeepEqual(actual, expected) {
-	if !Equal(actual, expected) {
+	if actual != expected {
 		t.Errorf("eval %s -> %s not %s", print(e), print(actual), print(expected))
 	}
 }
@@ -56,7 +58,7 @@ func TestArithmetic(t *testing.T) {
 func printTest(t *testing.T, expected string, e Evaluable) {
 	actual := print(e)
 	fmt.Println("TestPrint:", actual)
-	if !Equal(actual, expected) {
+	if actual != expected {
 		t.Errorf("print %s not %s", actual, expected)
 	}
 }
@@ -70,4 +72,33 @@ func TestPrint(t *testing.T) {
 	printTest(t, "'(1 a)", quote(list(1, sym("a"))))
 	printTest(t, "(1 . a)", cons(1, sym("a")))
 	printTest(t, "(quote . a)", cons(sym("quote"), sym("a")))
+}
+
+type Cons0Interface struct {
+}
+
+type Cons2Interface struct {
+	car, cdr Evaluable
+}
+
+type Cons3Interface struct {
+	car, cdr, other Evaluable
+}
+
+func assertEquals[T any](t *testing.T, name string, expected T, actual T) {
+	fmt.Println("test:", name)
+	if !reflect.DeepEqual(actual, expected) {
+		t.Error("  -> not equal expected=", expected, "actual=", actual)
+	}
+}
+
+func TestSize(t *testing.T) {
+	assertEquals(t, "Sizeof(2)", 8, unsafe.Sizeof(2))
+	assertEquals(t, "Sizeof(\"abcd\")", 16, unsafe.Sizeof("abcd"))
+	assertEquals(t, "Sizeof(Cons0Interface{})", 0, unsafe.Sizeof(Cons0Interface{}))
+	assertEquals(t, "Sizeof(Cons2Interface{2, 3})", 32, unsafe.Sizeof(Cons2Interface{2, 3}))
+	assertEquals(t, "Sizeof(&Cons2Interface{2, 3})", 8, unsafe.Sizeof(&Cons2Interface{2, 3}))
+	assertEquals(t, "Sizeof(Cons2Interface{\"a\", \"b\"})", 32, unsafe.Sizeof(Cons2Interface{"a", "b"}))
+	assertEquals(t, "Sizeof(Cons2Interface{\"a\", Cons2Interface{\"b\", \"c\"}})", 32, unsafe.Sizeof(Cons2Interface{"a", Cons2Interface{"b", "c"}}))
+	assertEquals(t, "Sizeof(Cons3Interface{2, 3, 4})", 48, unsafe.Sizeof(Cons3Interface{2, 3, 4}))
 }
