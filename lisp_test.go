@@ -7,13 +7,10 @@ import (
 	"unsafe"
 )
 
-func evalTest(t *testing.T, c *Env, expected Evaluable, e Evaluable) {
-	fmt.Println("TestEval:", print(e))
-	actual := eval(e, c)
-	// if actual != expected {
-	// if reflect.DeepEqual(actual, expected) {
-	if actual != expected {
-		t.Errorf("eval %s -> %s not %s", print(e), print(actual), print(expected))
+func assertEquals[T any](t *testing.T, method string, name string, expected T, actual T) {
+	fmt.Println(method, name)
+	if !reflect.DeepEqual(actual, expected) {
+		t.Error("  -> not equal expected=", expected, "actual=", actual)
 	}
 }
 
@@ -23,36 +20,37 @@ func quote(e Evaluable) Evaluable {
 
 func TestEval(t *testing.T) {
 	e := env()
-	evalTest(t, e, "abc", "abc")
-	evalTest(t, e, 123, 123)
-	evalTest(t, e, true, true)
-	evalTest(t, e, sym("a"), quote(sym("a")))
-	evalTest(t, e, list(1, 2, 3, 4), quote(list(1, 2, 3, 4)))
-	evalTest(t, e, 1, list(sym("car"), quote(list(1, 2, 3, 4))))
-	evalTest(t, e, list(2, 3, 4), list(sym("cdr"), quote(list(1, 2, 3, 4))))
-	evalTest(t, e, list(sym("a"), 1, 2, 3, 4), list(sym("cons"), quote(sym("a")), quote(list(1, 2, 3, 4))))
-	evalTest(t, e, cons(sym("a"), sym("b")), list(sym("cons"), quote(sym("a")), quote(sym("b"))))
+	assertEquals(t, "TestEval", "abc", "abc", eval("abc", e))
+	assertEquals(t, "TestEval", "123", 123, eval(123, e))
+	assertEquals(t, "TestEval", "true", true, eval(true, e))
+	assertEquals(t, "TestEval", "'a", sym("a"), eval(quote(sym("a")), e).(Symbol))
+	assertEquals(t, "TestEval", "'(1 2 3 4)", list(1, 2, 3, 4), eval(quote(list(1, 2, 3, 4)), e))
+	assertEquals(t, "TestEval", "(car '(1 2 3 4))", 1, eval(list(sym("car"), quote(list(1, 2, 3, 4))), e))
+	assertEquals(t, "TestEval", "(cdr '(1 2 3 4))", list(2, 3, 4), eval(list(sym("cdr"), quote(list(1, 2, 3, 4))), e))
+	assertEquals(t, "TestEval", "(cons 'a '(1 2 3 4))", list(sym("a"), 1, 2, 3, 4), eval(list(sym("cons"), quote(sym("a")), quote(list(1, 2, 3, 4))), e))
+	assertEquals(t, "TestEval", "(cons 'a 'b)", cons(sym("a"), sym("b")), eval(list(sym("cons"), quote(sym("a")), quote(sym("b"))), e).(Cons))
 }
+
 func TestArithmetic(t *testing.T) {
 	e := env()
-	evalTest(t, e, 0, list(sym("+")))
-	evalTest(t, e, 1, list(sym("+"), 1))
-	evalTest(t, e, 3, list(sym("+"), 1, 2))
-	evalTest(t, e, 10, list(sym("+"), 1, 2, 3, 4))
-	evalTest(t, e, 15, list(sym("+"), 1, 2, list(sym("+"), 3, 4), 5))
-	evalTest(t, e, 0, list(sym("-")))
-	evalTest(t, e, -1, list(sym("-"), 1))
-	evalTest(t, e, 1, list(sym("-"), 3, 2))
-	evalTest(t, e, -8, list(sym("-"), 1, 2, 3, 4))
-	evalTest(t, e, 1, list(sym("*")))
-	evalTest(t, e, 3, list(sym("*"), 3))
-	evalTest(t, e, 6, list(sym("*"), 2, 3))
-	evalTest(t, e, 24, list(sym("*"), 1, 2, 3, 4))
-	evalTest(t, e, 70, list(sym("*"), 1, 2, list(sym("+"), 3, 4), 5))
-	evalTest(t, e, 1, list(sym("/")))
-	evalTest(t, e, 0, list(sym("/"), 10))
-	evalTest(t, e, 1, list(sym("/"), 3, 2))
-	evalTest(t, e, 13, list(sym("/"), 1001, 7, 11))
+	assertEquals(t, "TestArithmetic", "(+)", 0, eval(list(sym("+")), e))
+	assertEquals(t, "TestArithmetic", "(+ 1)", 1, eval(list(sym("+"), 1), e))
+	assertEquals(t, "TestArithmetic", "(+ 1 2)", 3, eval(list(sym("+"), 1, 2), e))
+	assertEquals(t, "TestArithmetic", "(+ 1 2 3 4)", 10, eval(list(sym("+"), 1, 2, 3, 4), e))
+	assertEquals(t, "TestArithmetic", "(+ 1 2 (+ 3 4) 5)", 15, eval(list(sym("+"), 1, 2, list(sym("+"), 3, 4), 5), e))
+	assertEquals(t, "TestArithmetic", "(-)", 0, eval(list(sym("-")), e))
+	assertEquals(t, "TestArithmetic", "(- 1)", -1, eval(list(sym("-"), 1), e))
+	assertEquals(t, "TestArithmetic", "(- 3 2)", 1, eval(list(sym("-"), 3, 2), e))
+	assertEquals(t, "TestArithmetic", "(- 1 2 3 4)", -8, eval(list(sym("-"), 1, 2, 3, 4), e))
+	assertEquals(t, "TestArithmetic", "(*)", 1, eval(list(sym("*")), e))
+	assertEquals(t, "TestArithmetic", "(* 3)", 3, eval(list(sym("*"), 3), e))
+	assertEquals(t, "TestArithmetic", "(* 2 3)", 6, eval(list(sym("*"), 2, 3), e))
+	assertEquals(t, "TestArithmetic", "(* 1 2 3 4)", 24, eval(list(sym("*"), 1, 2, 3, 4), e))
+	assertEquals(t, "TestArithmetic", "(* 1 2 (+ 3 4) 5)", 70, eval(list(sym("*"), 1, 2, list(sym("+"), 3, 4), 5), e))
+	assertEquals(t, "TestArithmetic", "(/)", 1, eval(list(sym("/")), e))
+	assertEquals(t, "TestArithmetic", "(/ 10)", 0, eval(list(sym("/"), 10), e))
+	assertEquals(t, "TestArithmetic", "(/ 3 2)", 1, eval(list(sym("/"), 3, 2), e))
+	assertEquals(t, "TestArithmetic", "(/ 1001 7 11)", 13, eval(list(sym("/"), 1001, 7, 11), e))
 }
 
 func printTest(t *testing.T, expected string, e Evaluable) {
@@ -85,20 +83,13 @@ type Cons3Interface struct {
 	car, cdr, other Evaluable
 }
 
-func assertEquals[T any](t *testing.T, name string, expected T, actual T) {
-	fmt.Println("test:", name)
-	if !reflect.DeepEqual(actual, expected) {
-		t.Error("  -> not equal expected=", expected, "actual=", actual)
-	}
-}
-
 func TestSize(t *testing.T) {
-	assertEquals(t, "Sizeof(2)", 8, unsafe.Sizeof(2))
-	assertEquals(t, "Sizeof(\"abcd\")", 16, unsafe.Sizeof("abcd"))
-	assertEquals(t, "Sizeof(Cons0Interface{})", 0, unsafe.Sizeof(Cons0Interface{}))
-	assertEquals(t, "Sizeof(Cons2Interface{2, 3})", 32, unsafe.Sizeof(Cons2Interface{2, 3}))
-	assertEquals(t, "Sizeof(&Cons2Interface{2, 3})", 8, unsafe.Sizeof(&Cons2Interface{2, 3}))
-	assertEquals(t, "Sizeof(Cons2Interface{\"a\", \"b\"})", 32, unsafe.Sizeof(Cons2Interface{"a", "b"}))
-	assertEquals(t, "Sizeof(Cons2Interface{\"a\", Cons2Interface{\"b\", \"c\"}})", 32, unsafe.Sizeof(Cons2Interface{"a", Cons2Interface{"b", "c"}}))
-	assertEquals(t, "Sizeof(Cons3Interface{2, 3, 4})", 48, unsafe.Sizeof(Cons3Interface{2, 3, 4}))
+	assertEquals(t, "TestSize", "Sizeof(2)", 8, unsafe.Sizeof(2))
+	assertEquals(t, "TestSize", "Sizeof(\"abcd\")", 16, unsafe.Sizeof("abcd"))
+	assertEquals(t, "TestSize", "Sizeof(Cons0Interface{})", 0, unsafe.Sizeof(Cons0Interface{}))
+	assertEquals(t, "TestSize", "Sizeof(Cons2Interface{2, 3})", 32, unsafe.Sizeof(Cons2Interface{2, 3}))
+	assertEquals(t, "TestSize", "Sizeof(&Cons2Interface{2, 3})", 8, unsafe.Sizeof(&Cons2Interface{2, 3}))
+	assertEquals(t, "TestSize", "Sizeof(Cons2Interface{\"a\", \"b\"})", 32, unsafe.Sizeof(Cons2Interface{"a", "b"}))
+	assertEquals(t, "TestSize", "Sizeof(Cons2Interface{\"a\", Cons2Interface{\"b\", \"c\"}})", 32, unsafe.Sizeof(Cons2Interface{"a", Cons2Interface{"b", "c"}}))
+	assertEquals(t, "TestSize", "Sizeof(Cons3Interface{2, 3, 4})", 48, unsafe.Sizeof(Cons3Interface{2, 3, 4}))
 }
