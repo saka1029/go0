@@ -88,44 +88,54 @@ func progn(body Evaluable, env *Env) Evaluable {
 	return progn(body.(Cons).cdr, env)
 }
 
-func env() *Env {
-	env := &Env{map[Symbol]Evaluable{}, nil}
-	env.Define(Symbol("quote"), func(args Evaluable, c *Env) Evaluable {
+func env(prev ...*Env) *Env {
+	switch len(prev) {
+	case 0:
+		return &Env{map[Symbol]Evaluable{}, nil}
+	case 1:
+		return &Env{map[Symbol]Evaluable{}, prev[0]}
+	default:
+		panic("env() : too many arguments")
+	}
+}
+
+func globalEnv() *Env {
+	e := env()
+	e.Define(Symbol("quote"), func(args Evaluable, c *Env) Evaluable {
 		return args.(Cons).car
 	})
-	env.Define(Symbol("car"), func(args Evaluable, c *Env) Evaluable {
+	e.Define(Symbol("car"), func(args Evaluable, c *Env) Evaluable {
 		return evlis(args, c).(Cons).car.(Cons).car
 	})
-	env.Define(Symbol("cdr"), func(args Evaluable, c *Env) Evaluable {
+	e.Define(Symbol("cdr"), func(args Evaluable, c *Env) Evaluable {
 		return evlis(args, c).(Cons).car.(Cons).cdr
 	})
-	env.Define(Symbol("cons"), func(args Evaluable, c *Env) Evaluable {
+	e.Define(Symbol("cons"), func(args Evaluable, c *Env) Evaluable {
 		evaled := evlis(args, c)
 		return cons(evaled.(Cons).car, evaled.(Cons).cdr.(Cons).car)
 	})
-	env.Define(Symbol("+"), func(args Evaluable, c *Env) Evaluable {
+	e.Define(Symbol("+"), func(args Evaluable, c *Env) Evaluable {
 		return intArithmetic(args, 0, func(a, b int) int { return a + b }, c)
 	})
-	env.Define(Symbol("-"), func(args Evaluable, c *Env) Evaluable {
+	e.Define(Symbol("-"), func(args Evaluable, c *Env) Evaluable {
 		return intArithmetic(args, 0, func(a, b int) int { return a - b }, c)
 	})
-	env.Define(Symbol("*"), func(args Evaluable, c *Env) Evaluable {
+	e.Define(Symbol("*"), func(args Evaluable, c *Env) Evaluable {
 		return intArithmetic(args, 1, func(a, b int) int { return a * b }, c)
 	})
-	env.Define(Symbol("/"), func(args Evaluable, c *Env) Evaluable {
+	e.Define(Symbol("/"), func(args Evaluable, c *Env) Evaluable {
 		return intArithmetic(args, 1, func(a, b int) int { return a / b }, c)
 	})
-	env.Define(Symbol("lambda"), func(args Evaluable, c *Env) Evaluable {
+	e.Define(Symbol("lambda"), func(args Evaluable, c *Env) Evaluable {
 		parms := args.(Cons).car
 		body := args.(Cons).cdr
-		n := &Env{map[Symbol]Evaluable{}, c}
 		return func(args Evaluable, e *Env) Evaluable {
-			evaled := evlis(args, c)
-			pairlis(parms, evaled, n)
+			n := env(c)
+			pairlis(parms, evlis(args, c), n)
 			return progn(body, n)
 		}
 	})
-	return env
+	return e
 }
 
 type Evaluable interface {
@@ -229,7 +239,7 @@ func print(e Evaluable) string {
 // }
 
 func main() {
-	var context *Env = env()
+	var context *Env = globalEnv()
 	fmt.Println(context)
 	context.globals["symbol"] = "value"
 	fmt.Println(print(eval("string", context)))

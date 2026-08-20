@@ -20,7 +20,7 @@ func quote(e Evaluable) Evaluable {
 
 func TestEval(t *testing.T) {
 	m := "TestEval"
-	e := env()
+	e := globalEnv()
 	assertEquals(t, m, "abc", "abc", eval("abc", e))
 	assertEquals(t, m, "123", 123, eval(123, e))
 	assertEquals(t, m, "true", true, eval(true, e))
@@ -34,7 +34,7 @@ func TestEval(t *testing.T) {
 
 func TestArithmetic(t *testing.T) {
 	m := "TestArithmetic"
-	e := env()
+	e := globalEnv()
 	assertEquals(t, m, "(+)", 0, eval(list(sym("+")), e))
 	assertEquals(t, m, "(+ 1)", 1, eval(list(sym("+"), 1), e))
 	assertEquals(t, m, "(+ 1 2)", 3, eval(list(sym("+"), 1, 2), e))
@@ -102,8 +102,8 @@ func TestSize(t *testing.T) {
 
 func TestLambda(t *testing.T) {
 	m := "TestLambda"
-	e := env()
+	e := globalEnv()
 	lambda := (list(sym("lambda"), list(sym("a"), sym("b")), list(sym("+"), sym("a"), sym("b"))))
 	body := list(lambda, 1, 2)
-	assertEquals(t, m, "((lambda (a b) (+ a b) 1 2)", 3, eval(body, e))
+	assertEquals(t, m, "((lambda (a b) (+ a b)) 1 2)", 3, eval(body, e))
 }
