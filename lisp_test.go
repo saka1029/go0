@@ -105,6 +105,5 @@ func TestLambda(t *testing.T) {
 	e := env()
 	lambda := (list(sym("lambda"), list(sym("a"), sym("b")), list(sym("+"), sym("a"), sym("b"))))
 	body := list(lambda, 1, 2)
-	fmt.Println(print(body))
-	assertEquals(t, m, "(+ 1 2)", 3, eval(body, e))
+	assertEquals(t, m, "((lambda (a b) (+ a b) 1 2)", 3, eval(body, e))
 }

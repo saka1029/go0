@@ -116,13 +116,14 @@ func env() *Env {
 		return intArithmetic(args, 1, func(a, b int) int { return a / b }, c)
 	})
 	env.Define(Symbol("lambda"), func(args Evaluable, c *Env) Evaluable {
-		fmt.Println(print(args))
-		evaled := evlis(args, c)
 		parms := args.(Cons).car
 		body := args.(Cons).cdr
 		n := &Env{map[Symbol]Evaluable{}, c}
-		pairlis(parms, evaled, n)
-		return progn(body, n)
+		return func(args Evaluable, e *Env) Evaluable {
+			evaled := evlis(args, c)
+			pairlis(parms, evaled, n)
+			return progn(body, n)
+		}
 	})
 	return env
 }
