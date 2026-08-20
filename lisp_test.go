@@ -99,3 +99,12 @@ func TestSize(t *testing.T) {
 // 	cons := cons(1, 2)
 // 	assertEquals(t, m, "eq((1 . 2), (1 . 2))", false, eq(cons, cons))
 // }
+
+func TestLambda(t *testing.T) {
+	m := "TestLambda"
+	e := env()
+	lambda := (list(sym("lambda"), list(sym("a"), sym("b")), list(sym("+"), sym("a"), sym("b"))))
+	body := list(lambda, 1, 2)
+	fmt.Println(print(body))
+	assertEquals(t, m, "(+ 1 2)", 3, eval(body, e))
+}

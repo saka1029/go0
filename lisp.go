@@ -17,7 +17,7 @@ func (this *Env) Get(key Symbol) Evaluable {
 			return value
 		}
 	}
-	panic(fmt.Sprint("Get: cannot get the value of", key))
+	panic(fmt.Sprint("Get: cannot get the value of ", key))
 }
 
 func (this *Env) Set(key Symbol, value Evaluable) {
@@ -27,7 +27,7 @@ func (this *Env) Set(key Symbol, value Evaluable) {
 			return
 		}
 	}
-	panic(fmt.Sprint("Set: cannot set the value of", key))
+	panic(fmt.Sprint("Set: cannot set the value of ", key))
 }
 
 func (this *Env) Define(key Symbol, value Evaluable) {
@@ -88,16 +88,8 @@ func progn(body Evaluable, env *Env) Evaluable {
 	return progn(body.(Cons).cdr, env)
 }
 
-func env(previous ...*Env) *Env {
-	var env *Env
-	switch len(previous) {
-	case 0:
-		env = &Env{map[Symbol]Evaluable{}, nil}
-	case 1:
-		env = &Env{map[Symbol]Evaluable{}, previous[0]}
-	default:
-		panic("env() Too many args")
-	}
+func env() *Env {
+	env := &Env{map[Symbol]Evaluable{}, nil}
 	env.Define(Symbol("quote"), func(args Evaluable, c *Env) Evaluable {
 		return args.(Cons).car
 	})
@@ -124,13 +116,13 @@ func env(previous ...*Env) *Env {
 		return intArithmetic(args, 1, func(a, b int) int { return a / b }, c)
 	})
 	env.Define(Symbol("lambda"), func(args Evaluable, c *Env) Evaluable {
+		fmt.Println(print(args))
+		evaled := evlis(args, c)
 		parms := args.(Cons).car
 		body := args.(Cons).cdr
-		return func(args Evaluable, newEnv *Env) Evaluable {
-			n := &Env{map[Symbol]Evaluable{}, c}
-			pairlis(parms, args, n)
-			return progn(body, n)
-		}
+		n := &Env{map[Symbol]Evaluable{}, c}
+		pairlis(parms, evaled, n)
+		return progn(body, n)
 	})
 	return env
 }
@@ -165,7 +157,7 @@ func eval(e Evaluable, c *Env) Evaluable {
 	case int, int8, int16, int32, int64, string, bool:
 		return v
 	case Symbol:
-		return c.globals[v]
+		return c.Get(v)
 	case Cons:
 		return eval(v.car, c).(func(args Evaluable, c *Env) Evaluable)(v.cdr, c)
 	default:
