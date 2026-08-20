@@ -65,6 +65,29 @@ func intArithmetic(args Evaluable, start int, f func(a, b int) int, c *Env) int 
 	}
 }
 
+func pairlis(parms Evaluable, args Evaluable, env *Env) {
+	for {
+		if parm, ok := parms.(Cons); ok {
+			env.Define(parm.car.(Symbol), args.(Cons).car)
+			parms = parm.cdr
+			args = args.(Cons).cdr
+		} else {
+			break
+		}
+	}
+	if parms != nil {
+		env.Define(parms.(Symbol), args)
+	}
+}
+
+func progn(body Evaluable, env *Env) Evaluable {
+	if body.(Cons).cdr == nil {
+		return eval(body.(Cons).car, env)
+	}
+	eval(body.(Cons).car, env)
+	return progn(body.(Cons).cdr, env)
+}
+
 func env(previous ...*Env) *Env {
 	var env *Env
 	switch len(previous) {
@@ -99,6 +122,15 @@ func env(previous ...*Env) *Env {
 	})
 	env.Define(Symbol("/"), func(args Evaluable, c *Env) Evaluable {
 		return intArithmetic(args, 1, func(a, b int) int { return a / b }, c)
+	})
+	env.Define(Symbol("lambda"), func(args Evaluable, c *Env) Evaluable {
+		parms := args.(Cons).car
+		body := args.(Cons).cdr
+		return func(args Evaluable, newEnv *Env) Evaluable {
+			n := &Env{map[Symbol]Evaluable{}, c}
+			pairlis(parms, args, n)
+			return progn(body, n)
+		}
 	})
 	return env
 }
