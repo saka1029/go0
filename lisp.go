@@ -46,21 +46,21 @@ func evlis(args Evaluable, c *Env) Evaluable {
 	}
 }
 
-func intArithmetic(args Evaluable, unit int, f func(a, b int) int, c *Env) int {
+func intArithmetic(args Evaluable, start int, f func(a, b int) int, c *Env) int {
 	args = evlis(args, c)
 	var count, prev int
 	for {
 		if cons, ok := args.(Cons); ok {
 			value := cons.car.(int)
 			if count == 1 {
-				unit = prev
+				start = prev
 			}
-			unit = f(unit, value)
+			start = f(start, value)
 			count++
 			prev = value
 			args = cons.cdr
 		} else {
-			return unit
+			return start
 		}
 	}
 }
@@ -185,6 +185,23 @@ func print(e Evaluable) string {
 		panic(fmt.Sprint("print: unknown type ", v))
 	}
 }
+
+// func eq(left Evaluable, right Evaluable) bool {
+// 	switch v := left.(type) {
+// 	case Symbol, int, bool, string:
+// 		return left == right
+// 	case Cons:
+// 		if c, ok := right.(Cons); ok {
+// 			fmt.Println("v=", &v, "c=", &c)
+// 			return &v == &c
+// 		} else {
+// 			return false
+// 		}
+// 	default:
+// 		fmt.Println("left=", &left, "right=", &right, "v=", &v)
+// 		return &left == &right
+// 	}
+// }
 
 func main() {
 	var context *Env = env()

@@ -89,3 +89,13 @@ func TestSize(t *testing.T) {
 	assertEquals(t, m, "Sizeof(Cons2Interface{\"a\", Cons2Interface{\"b\", \"c\"}})", 32, unsafe.Sizeof(Cons2Interface{"a", Cons2Interface{"b", "c"}}))
 	assertEquals(t, m, "Sizeof(Cons3Interface{2, 3, 4})", 48, unsafe.Sizeof(Cons3Interface{2, 3, 4}))
 }
+
+// func TestEq(t *testing.T) {
+// 	m := "TestEq"
+// 	assertEquals(t, m, "eq(sym(\"a\"), sym(\"a\"))", true, eq(sym("a"), sym("a")))
+// 	assertEquals(t, m, "eq(\"a\", \"a\")", true, eq("a", "a"))
+// 	s := "abc"
+// 	assertEquals(t, m, "eq(s, s)", true, eq(s, s))
+// 	cons := cons(1, 2)
+// 	assertEquals(t, m, "eq((1 . 2), (1 . 2))", false, eq(cons, cons))
+// }
