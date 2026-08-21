@@ -264,12 +264,13 @@ func (this *Reader) get() rune {
 	ch, size, e := this.runeReader.ReadRune()
 	if size > 0 {
 		this.ch = ch
-		this.buffer = append(this.buffer, this.ch)
 	} else if size == 0 {
 		this.ch = EOF
 	} else if e != nil {
 		panic("get() : " + e.Error())
 	}
+	// EOFの場合もthis.bufferにappendする
+	this.buffer = append(this.buffer, this.ch)
 	return this.ch
 }
 
@@ -293,6 +294,7 @@ type EOFStruct struct {
 const EOF = rune(-1)
 
 func (this *Reader) readList() Evaluable {
+	this.getClear()
 	slice := []Evaluable{}
 	for {
 		this.spaces()
@@ -332,11 +334,10 @@ func isSymbolRest(ch rune) bool {
 }
 
 func (this *Reader) readNumber() int {
-	for isSymbolRest(this.ch) {
+	for unicode.IsDigit(this.ch) {
 		this.get()
 	}
 	if result, err := strconv.Atoi(string(this.buffer[0 : len(this.buffer)-1])); err == nil {
-		this.getClear()
 		return result
 	} else {
 		panic("readNumber: " + err.Error())
@@ -358,12 +359,11 @@ func (this *Reader) read() Evaluable {
 	case -1:
 		return EOF
 	case '(':
-		this.get()
 		return this.readList()
 	case '\'':
-		this.get()
+		this.getClear()
 		return list(sym("quote"), this.read())
-	case '-':
+	case '+', '-':
 		if unicode.IsDigit(this.get()) {
 			return this.readNumber()
 		} else {

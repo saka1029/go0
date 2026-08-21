@@ -120,9 +120,10 @@ func TestLambda(t *testing.T) {
 
 func TestReadSymbol(t *testing.T) {
 	m := "TestReaSymbol"
-	r := NewReader("  abc  𩸽  ")
+	r := NewReader("  abc  𩸽  dot.dot")
 	assertEquals(t, m, "abc", sym("abc"), r.read().(Symbol))
 	assertEquals(t, m, "𩸽", sym("𩸽"), r.read().(Symbol))
+	assertEquals(t, m, "dot.dot", sym("dot.dot"), r.read().(Symbol))
 	assertEquals(t, m, "EOF", EOF, r.read().(rune))
 }
 
@@ -131,5 +132,19 @@ func TestReadInt(t *testing.T) {
 	r := NewReader("  123  -456  ")
 	assertEquals(t, m, "123", 123, r.read().(int))
 	assertEquals(t, m, "-456", -456, r.read().(int))
+	assertEquals(t, m, "EOF", EOF, r.read().(rune))
+}
+
+func TestReadList(t *testing.T) {
+	m := "TestReadList"
+	r := NewReader("  ( abc 123 )  ")
+	assertEquals(t, m, "(abc 123)", list(sym("abc"), 123), r.read())
+	assertEquals(t, m, "EOF", EOF, r.read().(rune))
+}
+
+func TestReadQuote(t *testing.T) {
+	m := "TestReadQuote"
+	r := NewReader("'(abc 123)")
+	assertEquals(t, m, "123", list(sym("quote"), list(sym("abc"), 123)), r.read())
 	assertEquals(t, m, "EOF", EOF, r.read().(rune))
 }
