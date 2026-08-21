@@ -46,12 +46,13 @@ func evlis(args Evaluable, c *Env) Evaluable {
 	}
 }
 
-func intArithmetic(args Evaluable, start int, f func(a, b int) int, c *Env) int {
+func arithmetic[T int | int8 | int16 | int32 | int64 | float32 | float64](
+	args Evaluable, start T, f func(a, b T) T, c *Env) T {
 	args = evlis(args, c)
-	var count, prev int
+	var count, prev T
 	for {
 		if cons, ok := args.(Cons); ok {
-			value := cons.car.(int)
+			value := cons.car.(T)
 			if count == 1 {
 				start = prev
 			}
@@ -102,33 +103,33 @@ func env(prev ...*Env) *Env {
 func globalEnv() *Env {
 	e := env()
 	e.Define(Symbol("quote"), func(args Evaluable, c *Env) Evaluable {
-		return args.(Cons).car
+		return car(args)
 	})
 	e.Define(Symbol("car"), func(args Evaluable, c *Env) Evaluable {
-		return evlis(args, c).(Cons).car.(Cons).car
+		return car(car(evlis(args, c)))
 	})
 	e.Define(Symbol("cdr"), func(args Evaluable, c *Env) Evaluable {
-		return evlis(args, c).(Cons).car.(Cons).cdr
+		return cdr(car(evlis(args, c)))
 	})
 	e.Define(Symbol("cons"), func(args Evaluable, c *Env) Evaluable {
 		evaled := evlis(args, c)
-		return cons(evaled.(Cons).car, evaled.(Cons).cdr.(Cons).car)
+		return cons(car(evaled), car(cdr(evaled)))
 	})
 	e.Define(Symbol("+"), func(args Evaluable, c *Env) Evaluable {
-		return intArithmetic(args, 0, func(a, b int) int { return a + b }, c)
+		return arithmetic(args, 0, func(a, b int) int { return a + b }, c)
 	})
 	e.Define(Symbol("-"), func(args Evaluable, c *Env) Evaluable {
-		return intArithmetic(args, 0, func(a, b int) int { return a - b }, c)
+		return arithmetic(args, 0, func(a, b int) int { return a - b }, c)
 	})
 	e.Define(Symbol("*"), func(args Evaluable, c *Env) Evaluable {
-		return intArithmetic(args, 1, func(a, b int) int { return a * b }, c)
+		return arithmetic(args, 1, func(a, b int) int { return a * b }, c)
 	})
 	e.Define(Symbol("/"), func(args Evaluable, c *Env) Evaluable {
-		return intArithmetic(args, 1, func(a, b int) int { return a / b }, c)
+		return arithmetic(args, 1, func(a, b int) int { return a / b }, c)
 	})
 	e.Define(Symbol("lambda"), func(args Evaluable, c *Env) Evaluable {
-		parms := args.(Cons).car
-		body := args.(Cons).cdr
+		parms := car(args)
+		body := cdr(args)
 		return func(args Evaluable, e *Env) Evaluable {
 			n := env(c)
 			pairlis(parms, evlis(args, c), n)
@@ -136,7 +137,7 @@ func globalEnv() *Env {
 		}
 	})
 	e.Define(Symbol("define"), func(args Evaluable, c *Env) Evaluable {
-		c.Define(args.(Cons).car.(Symbol), eval(args.(Cons).cdr.(Cons).car, c))
+		c.Define(car(args).(Symbol), eval(car(cdr(args)), c))
 		return nil
 	})
 	return e
@@ -157,6 +158,14 @@ type Cons struct {
 
 func cons(car, cdr Evaluable) Cons {
 	return Cons{car, cdr}
+}
+
+func car(this Evaluable) Evaluable {
+	return this.(Cons).car
+}
+
+func cdr(this Evaluable) Evaluable {
+	return this.(Cons).cdr
 }
 
 func list(elements ...Evaluable) Evaluable {
