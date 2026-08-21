@@ -83,10 +83,12 @@ func TestSize(t *testing.T) {
 	assertEquals(t, m, "Sizeof(2)", 8, unsafe.Sizeof(2))
 	assertEquals(t, m, "Sizeof(\"abcd\")", 16, unsafe.Sizeof("abcd"))
 	assertEquals(t, m, "Sizeof(Cons0Interface{})", 0, unsafe.Sizeof(Cons0Interface{}))
+	assertEquals(t, m, "Sizeof(Cons2Interface{})", 32, unsafe.Sizeof(Cons2Interface{}))
 	assertEquals(t, m, "Sizeof(Cons2Interface{2, 3})", 32, unsafe.Sizeof(Cons2Interface{2, 3}))
 	assertEquals(t, m, "Sizeof(&Cons2Interface{2, 3})", 8, unsafe.Sizeof(&Cons2Interface{2, 3}))
 	assertEquals(t, m, "Sizeof(Cons2Interface{\"a\", \"b\"})", 32, unsafe.Sizeof(Cons2Interface{"a", "b"}))
 	assertEquals(t, m, "Sizeof(Cons2Interface{\"a\", Cons2Interface{\"b\", \"c\"}})", 32, unsafe.Sizeof(Cons2Interface{"a", Cons2Interface{"b", "c"}}))
+	assertEquals(t, m, "Sizeof(Cons3Interface{})", 48, unsafe.Sizeof(Cons3Interface{}))
 	assertEquals(t, m, "Sizeof(Cons3Interface{2, 3, 4})", 48, unsafe.Sizeof(Cons3Interface{2, 3, 4}))
 }
 
