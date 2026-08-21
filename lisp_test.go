@@ -107,5 +107,6 @@ func TestLambda(t *testing.T) {
 	body := list(lambda, 1, 2)
 	assertEquals(t, m, "((lambda (a b) (+ a b)) 1 2)", 3, eval(body, e))
 	assertEquals(t, m, "(define add (lambda (a b) (+ a b)) 1 2)", nil, eval(list(sym("define"), sym("add"), lambda), e))
-	assertEquals(t, m, "(add 3 4)", 7, eval(list(sym("add"), 3, 4), e))
+	assertEquals(t, m, "(define a 100)", nil, eval(list(sym("define"), sym("a"), 100), e))
+	assertEquals(t, m, "(add (+ a 1) 4)", 105, eval(list(sym("add"), list(sym("+"), sym("a"), 1), 4), e))
 }
