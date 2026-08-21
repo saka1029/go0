@@ -247,12 +247,12 @@ func print(e Evaluable) string {
 type Reader struct {
 	runeReader *strings.Reader
 	ch         rune
-	buffer     strings.Builder
+	buffer     []rune
 }
 
 func NewReader(source string) *Reader {
 	rr := strings.NewReader(source)
-	reader := &Reader{rr, 0, strings.Builder{}}
+	reader := &Reader{rr, 0, []rune{}}
 	reader.get()
 	return reader
 }
@@ -264,7 +264,7 @@ func (this *Reader) get() rune {
 	ch, size, e := this.runeReader.ReadRune()
 	if size > 0 {
 		this.ch = ch
-		this.buffer.WriteRune(this.ch)
+		this.buffer = append(this.buffer, this.ch)
 	} else if size == 0 {
 		this.ch = EOF
 	} else if e != nil {
@@ -274,7 +274,7 @@ func (this *Reader) get() rune {
 }
 
 func (this *Reader) getClear() rune {
-	this.buffer.Reset()
+	this.buffer = nil
 	return this.get()
 }
 
@@ -283,8 +283,8 @@ func (this *Reader) spaces() {
 	for unicode.IsSpace(this.ch) {
 		last = this.get()
 	}
-	this.buffer.Reset()
-	this.buffer.WriteRune(last)
+	this.buffer = nil
+	this.buffer = append(this.buffer, last)
 }
 
 type EOFStruct struct {
@@ -335,7 +335,7 @@ func (this *Reader) readNumber() int {
 	for isSymbolRest(this.ch) {
 		this.get()
 	}
-	if result, err := strconv.Atoi(this.buffer.String()); err == nil {
+	if result, err := strconv.Atoi(string(this.buffer)); err == nil {
 		this.getClear()
 		return result
 	} else {
@@ -347,8 +347,7 @@ func (this *Reader) readSymbol() Symbol {
 	for isSymbolRest(this.ch) {
 		this.get()
 	}
-	result := this.buffer.String()
-	result = result[0 : len(result)-1]
+	result := string(this.buffer[0 : len(this.buffer)-1])
 	this.getClear()
 	return sym(result)
 }
