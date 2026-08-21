@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
+	"unicode"
 )
 
 type Env struct {
@@ -167,6 +169,15 @@ func cdr(this Evaluable) Evaluable {
 	return this.(Cons).cdr
 }
 
+func listDot(elements ...Evaluable) Evaluable {
+	i := len(elements) - 1
+	result := elements[i]
+	for i--; i >= 0; i-- {
+		result = cons(elements[i], result)
+	}
+	return result
+}
+
 func list(elements ...Evaluable) Evaluable {
 	var result Evaluable = nil
 	for _, e := range slices.Backward(elements) {
@@ -231,6 +242,144 @@ func print(e Evaluable) string {
 		}
 		panic(fmt.Sprint("print: unknown type ", v))
 	}
+}
+
+type Reader struct {
+	runeReader *strings.Reader
+	ch         rune
+	buffer     strings.Builder
+}
+
+func NewReader(source string) *Reader {
+	rr := strings.NewReader(source)
+	reader := &Reader{rr, 0, strings.Builder{}}
+	reader.get()
+	return reader
+}
+
+func (this *Reader) get() rune {
+	if this.ch == EOF {
+		return this.ch
+	}
+	ch, size, e := this.runeReader.ReadRune()
+	if size > 0 {
+		this.ch = ch
+		this.buffer.WriteRune(this.ch)
+	} else if size == 0 {
+		this.ch = EOF
+	} else if e != nil {
+		panic("get() : " + e.Error())
+	}
+	return this.ch
+}
+
+func (this *Reader) getClear() rune {
+	this.buffer.Reset()
+	return this.get()
+}
+
+func (this *Reader) spaces() {
+	last := this.ch
+	for unicode.IsSpace(this.ch) {
+		last = this.get()
+	}
+	this.buffer.Reset()
+	this.buffer.WriteRune(last)
+}
+
+type EOFStruct struct {
+}
+
+const EOF = rune(-1)
+
+func (this *Reader) readList() Evaluable {
+	slice := []Evaluable{}
+	for {
+		this.spaces()
+		switch this.ch {
+		case ')':
+			this.getClear()
+			return list(slice...)
+		case -1:
+			panic("readList: unexpected EOF")
+		case '.':
+			this.getClear()
+			last := this.read()
+			this.spaces()
+			if this.ch != ')' {
+				panic("readList: ')' expected")
+			}
+			this.getClear()
+			slice = append(slice, last)
+			return listDot(slice)
+		default:
+			slice = append(slice, this.read())
+		}
+	}
+}
+
+func isSymbolFirst(ch rune) bool {
+	switch ch {
+	case -1, '(', ')', '.':
+		return false
+	default:
+		return !unicode.IsSpace(ch) && !unicode.IsDigit(ch)
+	}
+}
+
+func isSymbolRest(ch rune) bool {
+	return isSymbolFirst(ch) || unicode.IsDigit(ch) || ch == '.'
+}
+
+func (this *Reader) readNumber() int {
+	for isSymbolRest(this.ch) {
+		this.get()
+	}
+	if result, err := strconv.Atoi(this.buffer.String()); err == nil {
+		this.getClear()
+		return result
+	} else {
+		panic("readNumber: " + err.Error())
+	}
+}
+
+func (this *Reader) readSymbol() Symbol {
+	for isSymbolRest(this.ch) {
+		this.get()
+	}
+	result := this.buffer.String()
+	result = result[0 : len(result)-1]
+	this.getClear()
+	return sym(result)
+}
+
+func (this *Reader) read() Evaluable {
+	this.spaces()
+	switch this.ch {
+	case -1:
+		return EOF
+	case '(':
+		this.get()
+		return this.readList()
+	case '\'':
+		this.get()
+		return list(sym("quote"), this.read())
+	case '-':
+		if unicode.IsDigit(this.get()) {
+			return this.readNumber()
+		} else {
+			return this.readSymbol()
+		}
+	case '.':
+		panic("read: unexpected '.'")
+	default:
+		if isSymbolFirst(this.ch) {
+			return this.readSymbol()
+		} else {
+			panic("read: unexpected char '" + string(this.ch) + "'")
+		}
+	}
+
 }
 
 func main() {

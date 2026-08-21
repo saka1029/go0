@@ -100,6 +100,13 @@ func TestDefine(t *testing.T) {
 
 }
 
+func TestIsSymbolRest(t *testing.T) {
+	m := "TestIsSymbolRest"
+	assertEquals(t, m, "a", true, isSymbolRest('a'))
+	assertEquals(t, m, "space", false, isSymbolRest(' '))
+	assertEquals(t, m, ".", true, isSymbolRest('.'))
+}
+
 func TestLambda(t *testing.T) {
 	m := "TestLambda"
 	e := globalEnv()
@@ -109,4 +116,11 @@ func TestLambda(t *testing.T) {
 	assertEquals(t, m, "(define add (lambda (a b) (+ a b)) 1 2)", nil, eval(list(sym("define"), sym("add"), lambda), e))
 	assertEquals(t, m, "(define a 100)", nil, eval(list(sym("define"), sym("a"), 100), e))
 	assertEquals(t, m, "(add (+ a 1) 4)", 105, eval(list(sym("add"), list(sym("+"), sym("a"), 1), 4), e))
+}
+func TestReader(t *testing.T) {
+	m := "TestReader"
+	r := NewReader("  abc  𩸽  ")
+	assertEquals(t, m, "abc", sym("abc"), r.read().(Symbol))
+	assertEquals(t, m, "𩸽", sym("𩸽"), r.read().(Symbol))
+	assertEquals(t, m, "EOF", EOF, r.read().(rune))
 }
