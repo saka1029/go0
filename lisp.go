@@ -46,11 +46,8 @@ func evlis(args Evaluable, c *Env) Evaluable {
 	}
 }
 
-type binary[T int | int8 | int16 | int32 | int64 | float32 | float64] func(a, b T) T
-
 func arithmetic[T int | int8 | int16 | int32 | int64 | float32 | float64](
-	args Evaluable, start T, f binary[T], c *Env) T {
-	args = evlis(args, c)
+	args Evaluable, start T, f func(a, b T) T) Evaluable {
 	var count, prev T
 	for {
 		if cons, ok := args.(Cons); ok {
@@ -118,16 +115,16 @@ func globalEnv() *Env {
 		return cons(car(evaled), car(cdr(evaled)))
 	})
 	e.Define(Symbol("+"), func(args Evaluable, c *Env) Evaluable {
-		return arithmetic(args, 0, func(a, b int) int { return a + b }, c)
+		return arithmetic(evlis(args, c), 0, func(a, b int) int { return a + b })
 	})
 	e.Define(Symbol("-"), func(args Evaluable, c *Env) Evaluable {
-		return arithmetic(args, 0, func(a, b int) int { return a - b }, c)
+		return arithmetic(evlis(args, c), 0, func(a, b int) int { return a - b })
 	})
 	e.Define(Symbol("*"), func(args Evaluable, c *Env) Evaluable {
-		return arithmetic(args, 1, func(a, b int) int { return a * b }, c)
+		return arithmetic(evlis(args, c), 1, func(a, b int) int { return a * b })
 	})
 	e.Define(Symbol("/"), func(args Evaluable, c *Env) Evaluable {
-		return arithmetic(args, 1, func(a, b int) int { return a / b }, c)
+		return arithmetic(evlis(args, c), 1, func(a, b int) int { return a / b })
 	})
 	e.Define(Symbol("lambda"), func(args Evaluable, c *Env) Evaluable {
 		parms := car(args)
