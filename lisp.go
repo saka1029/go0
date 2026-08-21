@@ -46,8 +46,10 @@ func evlis(args Evaluable, c *Env) Evaluable {
 	}
 }
 
+type binary[T int | int8 | int16 | int32 | int64 | float32 | float64] func(a, b T) T
+
 func arithmetic[T int | int8 | int16 | int32 | int64 | float32 | float64](
-	args Evaluable, start T, f func(a, b T) T, c *Env) T {
+	args Evaluable, start T, f binary[T], c *Env) T {
 	args = evlis(args, c)
 	var count, prev T
 	for {
