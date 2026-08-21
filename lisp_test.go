@@ -117,10 +117,19 @@ func TestLambda(t *testing.T) {
 	assertEquals(t, m, "(define a 100)", nil, eval(list(sym("define"), sym("a"), 100), e))
 	assertEquals(t, m, "(add (+ a 1) 4)", 105, eval(list(sym("add"), list(sym("+"), sym("a"), 1), 4), e))
 }
-func TestReader(t *testing.T) {
-	m := "TestReader"
+
+func TestReadSymbol(t *testing.T) {
+	m := "TestReaSymbol"
 	r := NewReader("  abc  𩸽  ")
 	assertEquals(t, m, "abc", sym("abc"), r.read().(Symbol))
 	assertEquals(t, m, "𩸽", sym("𩸽"), r.read().(Symbol))
+	assertEquals(t, m, "EOF", EOF, r.read().(rune))
+}
+
+func TestReadInt(t *testing.T) {
+	m := "TestReaInt"
+	r := NewReader("  123  -456  ")
+	assertEquals(t, m, "123", 123, r.read().(int))
+	assertEquals(t, m, "-456", -456, r.read().(int))
 	assertEquals(t, m, "EOF", EOF, r.read().(rune))
 }

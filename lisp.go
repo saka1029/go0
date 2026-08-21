@@ -335,7 +335,7 @@ func (this *Reader) readNumber() int {
 	for isSymbolRest(this.ch) {
 		this.get()
 	}
-	if result, err := strconv.Atoi(string(this.buffer)); err == nil {
+	if result, err := strconv.Atoi(string(this.buffer[0 : len(this.buffer)-1])); err == nil {
 		this.getClear()
 		return result
 	} else {
@@ -374,6 +374,8 @@ func (this *Reader) read() Evaluable {
 	default:
 		if isSymbolFirst(this.ch) {
 			return this.readSymbol()
+		} else if unicode.IsDigit(this.ch) {
+			return this.readNumber()
 		} else {
 			panic("read: unexpected char '" + string(this.ch) + "'")
 		}
