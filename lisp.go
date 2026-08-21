@@ -68,9 +68,9 @@ func arithmetic[T int | int8 | int16 | int32 | int64 | float32 | float64](
 func pairlis(parms Evaluable, args Evaluable, env *Env) {
 	for {
 		if parm, ok := parms.(Cons); ok {
-			env.Define(parm.car.(Symbol), args.(Cons).car)
+			env.Define(parm.car.(Symbol), car(args))
 			parms = parm.cdr
-			args = args.(Cons).cdr
+			args = cdr(args)
 		} else {
 			break
 		}
@@ -233,35 +233,5 @@ func print(e Evaluable) string {
 	}
 }
 
-// func eq(left Evaluable, right Evaluable) bool {
-// 	switch v := left.(type) {
-// 	case Symbol, int, bool, string:
-// 		return left == right
-// 	case Cons:
-// 		if c, ok := right.(Cons); ok {
-// 			fmt.Println("v=", &v, "c=", &c)
-// 			return &v == &c
-// 		} else {
-// 			return false
-// 		}
-// 	default:
-// 		fmt.Println("left=", &left, "right=", &right, "v=", &v)
-// 		return &left == &right
-// 	}
-// }
-
 func main() {
-	var context *Env = globalEnv()
-	fmt.Println(context)
-	context.globals["symbol"] = "value"
-	fmt.Println(print(eval("string", context)))
-	fmt.Println(print(eval(Symbol("symbol"), context)))
-	fmt.Println(print(eval(123, context)))
-	fmt.Println(print(list(123, "a", 3, 4)))
-	fmt.Println(print(cons(123, "a")))
-	fmt.Println(print(list(Symbol("quote"), list("a"))))
-	fmt.Println(print(cons(Symbol("quote"), Symbol("b"))))
-	fmt.Println(print(list(Symbol("quote"), Symbol("b"), 123)))
-	// fmt.Println(print(eval(cons(Symbol("quote"), Symbol("b")), context)))
-	// fmt.Println(print(eval(2.3, context)))
 }
