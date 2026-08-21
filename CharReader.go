@@ -1,6 +1,6 @@
 package main
 
-func stringLength(b byte) int {
+func CharLength(b byte) int {
 	switch {
 	case b&0b10000000 == 0b00000000:
 		return 1
@@ -15,20 +15,20 @@ func stringLength(b byte) int {
 	}
 }
 
-type StringReader struct {
+type CharReader struct {
 	s     string
 	index int
 }
 
-func NewStringReader(s string) *StringReader {
-	return &StringReader{s, 0}
+func NewCharReader(s string) *CharReader {
+	return &CharReader{s, 0}
 }
 
-func (this *StringReader) Get() string {
+func (this *CharReader) Get() string {
 	if this.index >= len(this.s) {
 		return ""
 	}
-	length := stringLength(this.s[this.index])
+	length := CharLength(this.s[this.index])
 	result := this.s[this.index : this.index+length]
 	this.index += length
 	return result
