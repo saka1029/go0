@@ -135,6 +135,10 @@ func globalEnv() *Env {
 			return progn(body, n)
 		}
 	})
+	e.Define(Symbol("define"), func(args Evaluable, c *Env) Evaluable {
+		c.Define(args.(Cons).car.(Symbol), eval(args.(Cons).cdr.(Cons).car, c))
+		return nil
+	})
 	return e
 }
 

@@ -100,10 +100,20 @@ func TestSize(t *testing.T) {
 // 	assertEquals(t, m, "eq((1 . 2), (1 . 2))", false, eq(cons, cons))
 // }
 
+func TestDefine(t *testing.T) {
+	m := "TestDefine"
+	e := globalEnv()
+	assertEquals(t, m, "(define a (+ 1 2))", nil, eval(list(sym("define"), sym("a"), list(sym("+"), 1, 2)), e))
+	assertEquals(t, m, "a", 3, eval(sym("a"), e))
+
+}
+
 func TestLambda(t *testing.T) {
 	m := "TestLambda"
 	e := globalEnv()
 	lambda := (list(sym("lambda"), list(sym("a"), sym("b")), list(sym("+"), sym("a"), sym("b"))))
 	body := list(lambda, 1, 2)
 	assertEquals(t, m, "((lambda (a b) (+ a b)) 1 2)", 3, eval(body, e))
+	assertEquals(t, m, "(define add (lambda (a b) (+ a b)) 1 2)", nil, eval(list(sym("define"), sym("add"), lambda), e))
+	assertEquals(t, m, "(add 3 4)", 7, eval(list(sym("add"), 3, 4), e))
 }
