@@ -322,6 +322,17 @@ func (this *Reader) readList() Evaluable {
 	}
 }
 
+func (this *Reader) readNumber() int {
+	for unicode.IsDigit(this.ch) {
+		this.get()
+	}
+	if result, err := strconv.Atoi(string(this.buffer[0 : len(this.buffer)-1])); err == nil {
+		return result
+	} else {
+		panic("readNumber: " + err.Error())
+	}
+}
+
 func isSymbolFirst(ch rune) bool {
 	switch ch {
 	case -1, '(', ')', '.':
@@ -335,23 +346,11 @@ func isSymbolRest(ch rune) bool {
 	return isSymbolFirst(ch) || unicode.IsDigit(ch) || ch == '.'
 }
 
-func (this *Reader) readNumber() int {
-	for unicode.IsDigit(this.ch) {
-		this.get()
-	}
-	if result, err := strconv.Atoi(string(this.buffer[0 : len(this.buffer)-1])); err == nil {
-		return result
-	} else {
-		panic("readNumber: " + err.Error())
-	}
-}
-
 func (this *Reader) readSymbol() Symbol {
 	for isSymbolRest(this.ch) {
 		this.get()
 	}
 	result := string(this.buffer[0 : len(this.buffer)-1])
-	this.getClear()
 	return sym(result)
 }
 
