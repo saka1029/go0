@@ -145,6 +145,12 @@ func TestReadQuote2(t *testing.T) {
 	assertEquals(t, "EOF", EOF, r.read().(rune))
 }
 
+func TestReadQuote3(t *testing.T) {
+	r := NewReader("'(a . b)")
+	assertEquals(t, "'(a . b))", list(sym("quote"), cons(sym("a"), sym("b"))), r.read())
+	assertEquals(t, "EOF", EOF, r.read().(rune))
+}
+
 func rep(source string, e *Env) string {
 	return print(eval(NewReader(source).read(), e))
 }
@@ -153,6 +159,7 @@ func TestReadEvalPrint(t *testing.T) {
 	e := globalEnv()
 	assertEquals(t, "'a", "a", rep("'a", e))
 	assertEquals(t, "123", "123", rep("123", e))
+	assertEquals(t, "'(a . b)", "(a . b)", rep("'(a . b)", e))
 	assertEquals(t, "(cons 1 2)", "(1 . 2)", rep("(cons 1 2)", e))
 	assertEquals(t, "(cons 'a 'b)", "(a . b)", rep("(cons 'a 'b)", e))
 	assertEquals(t, "(car '(a b))", "a", rep("(car '(a b))", e))

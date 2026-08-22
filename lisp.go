@@ -315,7 +315,7 @@ func (this *Reader) readList() Evaluable {
 			}
 			this.getClear()
 			slice = append(slice, last)
-			return listDot(slice)
+			return listDot(slice...)
 		default:
 			slice = append(slice, this.read())
 		}
