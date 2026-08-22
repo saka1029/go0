@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"slices"
 	"strconv"
 	"strings"
@@ -257,20 +258,24 @@ func NewReader(source string) *Reader {
 	return reader
 }
 
+func (this *Reader) append(ch rune) {
+	this.buffer = append(this.buffer, ch)
+}
+
 func (this *Reader) get() rune {
 	if this.ch == EOF {
 		return this.ch
 	}
-	ch, size, e := this.runeReader.ReadRune()
-	if size > 0 {
-		this.ch = ch
-	} else if size == 0 {
+	ch, _, e := this.runeReader.ReadRune()
+	if e == io.EOF {
 		this.ch = EOF
 	} else if e != nil {
 		panic("get() : " + e.Error())
+	} else {
+		this.ch = ch
 	}
 	// EOFの場合もthis.bufferにappendする
-	this.buffer = append(this.buffer, this.ch)
+	this.append(this.ch)
 	return this.ch
 }
 
@@ -285,10 +290,7 @@ func (this *Reader) spaces() {
 		last = this.get()
 	}
 	this.buffer = nil
-	this.buffer = append(this.buffer, last)
-}
-
-type EOFStruct struct {
+	this.append(last)
 }
 
 const EOF = rune(-1)
@@ -302,7 +304,7 @@ func (this *Reader) readList() Evaluable {
 		case ')':
 			this.getClear()
 			return list(slice...)
-		case -1:
+		case EOF:
 			panic("readList: unexpected EOF")
 		case '.':
 			this.getClear()
