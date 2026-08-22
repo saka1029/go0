@@ -170,6 +170,12 @@ func cdr(this Evaluable) Evaluable {
 	return this.(Cons).cdr
 }
 
+/*
+ * 引数elementsの各要素を連結してリストにする。
+ * elementsの最後の要素はリスト末尾のcdr要素となる。
+ * listDot(a, b, c) -> (a b . c)
+ * listDot(a, b, nil) -> (a b)
+ */
 func listDot(elements ...Evaluable) Evaluable {
 	i := len(elements) - 1
 	result := elements[i]
@@ -179,6 +185,12 @@ func listDot(elements ...Evaluable) Evaluable {
 	return result
 }
 
+/*
+ * 引数elementsの各要素を連結してリストにする。
+ * リスト末尾のcdr要素はnilとなる。
+ * listDot(a, b, c) -> (a b c)
+ * listDot(a, b, nil) -> (a b ())
+ */
 func list(elements ...Evaluable) Evaluable {
 	var result Evaluable = nil
 	for _, e := range slices.Backward(elements) {
@@ -189,7 +201,7 @@ func list(elements ...Evaluable) Evaluable {
 
 func eval(e Evaluable, c *Env) Evaluable {
 	switch v := e.(type) {
-	case int, int8, int16, int32, int64, string, bool:
+	case int, string, bool:
 		return v
 	case Symbol:
 		return c.Get(v)
@@ -229,10 +241,10 @@ func printCons(c Cons) string {
 
 func print(e Evaluable) string {
 	switch v := e.(type) {
-	case int, int8, int16, int32, int64, bool:
+	case int, bool:
 		return fmt.Sprint(v)
 	case string:
-		return v
+		return "\"" + v + "\""
 	case Symbol:
 		return string(v)
 	case Cons:
@@ -354,6 +366,19 @@ func (this *Reader) readSymbol() Symbol {
 	return sym(result)
 }
 
+func (this *Reader) readString() string {
+	this.getClear()
+	for this.ch != EOF && this.ch != '"' {
+		this.get()
+	}
+	if this.ch != '"' {
+		panic("readString: '\"' expected")
+	}
+	result := string(this.buffer[0 : len(this.buffer)-1])
+	this.get()
+	return result
+}
+
 func (this *Reader) read() Evaluable {
 	this.spaces()
 	switch this.ch {
@@ -370,6 +395,8 @@ func (this *Reader) read() Evaluable {
 		} else {
 			return this.readSymbol()
 		}
+	case '"':
+		return this.readString()
 	case '.':
 		panic("read: unexpected '.'")
 	default:
