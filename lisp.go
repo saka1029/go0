@@ -297,7 +297,7 @@ func (this *Reader) getClear() rune {
 }
 
 func (this *Reader) spaces() {
-	last := this.ch
+	last := this.ch // 最後の空白でないrune
 	for unicode.IsSpace(this.ch) {
 		last = this.get()
 	}
@@ -338,11 +338,8 @@ func (this *Reader) readNumber() int {
 	for unicode.IsDigit(this.ch) {
 		this.get()
 	}
-	if result, err := strconv.Atoi(string(this.buffer[0 : len(this.buffer)-1])); err == nil {
-		return result
-	} else {
-		panic("readNumber: " + err.Error())
-	}
+	result, _ := strconv.Atoi(string(this.buffer[0 : len(this.buffer)-1]))
+	return result
 }
 
 func isSymbolFirst(ch rune) bool {
@@ -358,12 +355,19 @@ func isSymbolRest(ch rune) bool {
 	return isSymbolFirst(ch) || unicode.IsDigit(ch) || ch == '.'
 }
 
-func (this *Reader) readSymbol() Symbol {
+func (this *Reader) readSymbol() Evaluable {
 	for isSymbolRest(this.ch) {
 		this.get()
 	}
 	result := string(this.buffer[0 : len(this.buffer)-1])
-	return sym(result)
+	switch result {
+	case "true":
+		return true
+	case "false":
+		return false
+	default:
+		return sym(result)
+	}
 }
 
 func (this *Reader) readString() string {

@@ -159,6 +159,8 @@ func TestReadEvalPrint(t *testing.T) {
 	e := globalEnv()
 	assertEquals(t, "'a", "a", rep("'a", e))
 	assertEquals(t, "123", "123", rep("123", e))
+	assertEquals(t, "true", "true", rep("true", e))
+	assertEquals(t, "false", "false", rep("false", e))
 	assertEquals(t, "\"a\"", "\"a\"", rep("\"a\"", e))
 	assertEquals(t, "'(a . b)", "(a . b)", rep("'(a . b)", e))
 	assertEquals(t, "(cons 1 2)", "(1 . 2)", rep("(cons 1 2)", e))
